@@ -12,13 +12,14 @@ import {
 } from "@/components/ui/dialog";
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, X } from "lucide-react";
 import Image from "next/image";
 
 interface FoodOrderingDialogProps {
@@ -57,13 +58,6 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
     { label: "Large", price: 100 },
     { label: "Pook", price: 0 },
     { label: "Banana", price: 50 },
-    { label: "ABC", price: 10 },
-    { label: "Small", price: 0 },
-    { label: "Medium", price: 50 },
-    { label: "Large", price: 100 },
-    { label: "Pook", price: 0 },
-    { label: "Banana", price: 50 },
-    { label: "ABC", price: 10 },
   ];
 
   const increment = () => setQuantity((prev) => prev + 1);
@@ -72,7 +66,7 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
 const Content = () => (
   <div className="flex flex-col h-full">
     {/* Scrollable content */}
-    <div className="overflow-y-auto flex-1 p-4 space-y-4">
+    <div className="overflow-y-auto flex-1 p-4 md:p-0 space-y-4">
       <div>
         <Image
           src={item.image}
@@ -135,7 +129,14 @@ const Content = () => (
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent className="h-auto z-[1100]">
           <DrawerHeader>
-            <DrawerTitle>{item.name}</DrawerTitle>
+            <div className="flex justify-between items-center gap-8">
+              <DrawerTitle>{item.name}</DrawerTitle>
+              <DrawerClose asChild>
+                <button>
+                  <X />
+                </button>
+              </DrawerClose>
+            </div>
             <DrawerDescription>
               Select size, quantity, and add special instructions
             </DrawerDescription>

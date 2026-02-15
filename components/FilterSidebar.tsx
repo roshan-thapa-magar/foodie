@@ -28,42 +28,43 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 border-r">
-        <div className="p-4 flex flex-col h-screen">
-          
-          {/* Header */}
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-bold">FILTER</span>
-            <button
-              className="text-sm text-muted-foreground hover:underline"
-              onClick={() => setOpen(false)}
-            >
-              Clear
-            </button>
-          </div>
+<div className="hidden lg:block w-64 border-r h-full">
+  <div className="flex flex-col h-full">
 
-          {/* Scrollable Categories */}
-          <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-            {categories.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Checkbox />
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
+    {/* Header */}
+    <div className="flex justify-between items-center mb-4">
+      <span className="text-lg font-bold">FILTER</span>
+      <button
+        className="text-sm text-muted-foreground hover:underline"
+        onClick={() => setOpen(false)}
+      >
+        Clear
+      </button>
+    </div>
 
-          {/* Sticky Price Filter */}
-          <div className="border-t pt-4 mt-4">
-            <span className="font-medium block mb-2">Prices (Rs.)</span>
-            <div className="flex items-center gap-2">
-              <Input placeholder="Min" />
-              <span>:</span>
-              <Input placeholder="Max" />
-            </div>
-          </div>
-
+    {/* Scrollable Categories ONLY */}
+    <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+      {categories.map((item, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <Checkbox />
+          <span>{item}</span>
         </div>
+      ))}
+    </div>
+
+    {/* Fixed Price Filter (NOT scrolling) */}
+    <div className="border-t mt-4">
+      <span className="font-medium block mb-2">Prices (Rs.)</span>
+      <div className="flex items-center gap-2">
+        <Input placeholder="Min" />
+        <span>:</span>
+        <Input placeholder="Max" />
       </div>
+    </div>
+
+  </div>
+</div>
+
 
       {/* Mobile Drawer */}
       <Drawer open={open} onOpenChange={setOpen}>
