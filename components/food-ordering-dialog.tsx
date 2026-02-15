@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,8 +65,6 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
     { name: "Make It Larger 12 inch", price: 150 },
   ]
 
-  const increment = () => setQuantity((prev) => prev + 1);
-  const decrement = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   const Content = () => (
     <div className="flex flex-col h-full">
@@ -101,17 +98,15 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
           <button
             type="button"
             className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 hover:bg-primary/90 text-primary-foreground"
-            onClick={decrement}
           >
             <Minus />
           </button>
           <span className="text-lg font-semibold min-w-[24px] text-center text-foreground">
-            {quantity}
+            8
           </span>
           <button
             type="button"
             className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 hover:bg-primary/90 text-primary-foreground"
-            onClick={increment}
           >
             <Plus />
           </button>
