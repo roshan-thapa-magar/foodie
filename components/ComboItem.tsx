@@ -15,7 +15,7 @@ interface ComboItemProps {
 
 export default function ComboItem({ item, className = "" }: ComboItemProps) {
   return (
-     <FoodOrderingDialog item={{ name: item.title, image :item.image }}>
+     <FoodOrderingDialog item={{ name: item.title, image :item.image, price:item.price,description:item.description ?? "" }}>
     <div
       key={item.id}
       className={`flex-shrink-0 border rounded-lg transition-all duration-300 ease-in-out hover:border-green-500 hover:shadow-lg cursor-pointer ${className}`}

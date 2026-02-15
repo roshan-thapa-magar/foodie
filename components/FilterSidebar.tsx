@@ -43,7 +43,7 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
     </div>
 
     {/* Scrollable Categories ONLY */}
-    <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+    <div className="flex-1 overflow-y-auto space-y-2 pr-2 hide-scrollbar">
       {categories.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
           <Checkbox />
@@ -83,7 +83,7 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           </DrawerHeader>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 hide-scrollbar">
             {categories.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <Checkbox />
