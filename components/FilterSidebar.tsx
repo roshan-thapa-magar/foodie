@@ -28,7 +28,7 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
   return (
     <>
       {/* Desktop Sidebar */}
-<div className="hidden lg:block w-64 border-r h-full">
+<div className="hidden lg:block w-64 h-full">
   <div className="flex flex-col h-full">
 
     {/* Header */}

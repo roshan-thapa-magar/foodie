@@ -10,7 +10,15 @@ import ShoppingBagIcon from "./Bag"
 import MobileMenu from "./MobileMenu"
 import { useRouter } from "next/navigation"
 import { useAuthModal } from "@/context/auth-modal-context"
-
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 const Header = () => {
   const router = useRouter()
   const { closeModal, openModal } = useAuthModal()
