@@ -44,7 +44,6 @@ const SearchBar = () => {
         <PopoverContent align="start" className="!p-0">
           <PopoverHeader>
             <PopoverTitle className="px-4 pt-4 text-lg extrabold">Items and Combos</PopoverTitle>
-            <PopoverDescription>
               <div className="flex items-center space-x-2 hover:bg-gray-100 px-4 py-2 cursor-pointer">
                 <Image
                   src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDTYIeLcFSZZi9jO56bBqIHMNHYJOeNdKK2w&s"
@@ -78,7 +77,6 @@ const SearchBar = () => {
                 />
                 <span className="text-sm font-extrabold">Gorkha Strong</span>
               </div>
-            </PopoverDescription>
           </PopoverHeader>
         </PopoverContent>
 
@@ -119,7 +117,6 @@ const SearchBar = () => {
                 <PopoverContent align="center" className="!p-0">
                   <PopoverHeader>
                     <PopoverTitle className="px-4 pt-4 text-lg extrabold">Items and Combos</PopoverTitle>
-                    <PopoverDescription>
                       <div className="flex items-center space-x-2 hover:bg-gray-100 px-4 py-2 cursor-pointer">
                         <Image
                           src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDTYIeLcFSZZi9jO56bBqIHMNHYJOeNdKK2w&s"
@@ -153,7 +150,6 @@ const SearchBar = () => {
                         />
                         <span className="text-sm font-extrabold">Gorkha Strong</span>
                       </div>
-                    </PopoverDescription>
                   </PopoverHeader>
                 </PopoverContent>
               </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { Input } from "../ui/input"
-import { Search, MousePointer2, Phone } from "lucide-react"
+import { Search, MousePointer2, Phone, User } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import SearchBar from "./SearchBar"
 import UserAvatar from "./UserAvatar"
@@ -19,9 +19,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useSession,signIn, signOut} from "next-auth/react";
+
 const Header = () => {
   const router = useRouter()
   const { closeModal, openModal } = useAuthModal()
+  const {data: session , status} = useSession();
 
   return (
     <header className="w-full shadow-sm">
@@ -66,7 +69,7 @@ const Header = () => {
           <ShoppingBagIcon />
           {/* Desktop only */}
           <div className="hidden md:flex">
-            <UserAvatar />
+            {status === "authenticated" ?(<UserAvatar />):(<div onClick={openModal}><User /></div>)}
           </div>
         </div>
       </div>

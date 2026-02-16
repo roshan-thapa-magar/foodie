@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { X } from "lucide-react"
 import { useAuthModal } from "@/context/auth-modal-context"
-
+import {signIn} from "next-auth/react"
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const [step, setStep] = useState<0 | 1 | 2>(0) // 0: Login, 1: Register, 2: OTP
   const [phone, setPhone] = useState("")
@@ -91,7 +91,7 @@ const { closeModal } = useAuthModal()
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => setStep(1)}
+                    onClick={() => signIn('google')}
                   >
                      Login with Google
                   </Button>
