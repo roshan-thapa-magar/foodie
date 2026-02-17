@@ -50,7 +50,7 @@ const Header = () => {
             <Phone className="w-6 h-6 text-foreground flex-shrink-0" />
 
             {/* Text */}
-            <span onClick={openModal} className="flex flex-col leading-none">
+            <span className="flex flex-col leading-none">
               <span className="text-xs text-gray-500">CONTACT US</span>
               <span className="font-bold text-sm">9742531161</span>
             </span>
@@ -69,7 +69,7 @@ const Header = () => {
           <ShoppingBagIcon />
           {/* Desktop only */}
           <div className="hidden md:flex">
-            {status === "authenticated" ?(<UserAvatar />):(<div onClick={openModal}><User /></div>)}
+            {status === "authenticated" ?(<UserAvatar />):(<div onClick={openModal} className="cursor-pointer"><User /></div>)}
           </div>
         </div>
       </div>

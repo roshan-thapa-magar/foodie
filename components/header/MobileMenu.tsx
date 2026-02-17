@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { Menu as MenuIcon, Tag, User, Power } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useSession,signIn, signOut} from "next-auth/react";
+import { useAuthModal } from "@/context/auth-modal-context"
 
 import {
   Sheet,
@@ -15,6 +17,8 @@ import {
 const MobileMenu = () => {
   const [open, setOpen] = useState(false)
   const router = useRouter()
+  const {data: session , status} = useSession();
+  const { closeModal, openModal } = useAuthModal()
 
   const handleNavigate = (path: string) => {
     setOpen(false)
@@ -23,7 +27,13 @@ const MobileMenu = () => {
 
   const handleLogout = () => {
     setOpen(false)
+    signOut()
     console.log("Logout")
+  }
+
+  const handleLogIn = () =>{
+    setOpen(false)
+    openModal()
   }
 
   return (
@@ -55,7 +65,7 @@ const MobileMenu = () => {
           </button>
 
           <button
-            onClick={() => handleNavigate("/myAccount")}
+            onClick={status === "authenticated" ? () => handleNavigate("/myAccount") : handleLogIn}
             className="flex items-center gap-4 font-medium"
           >
             <User className="h-5 w-5" />
@@ -66,11 +76,11 @@ const MobileMenu = () => {
         {/* Logout */}
         <div className="mt-auto pb-6 px-4">
           <button
-            onClick={handleLogout}
+            onClick={status === "authenticated" ? handleLogout : handleLogIn}
             className="flex items-center gap-4 text-muted-foreground hover:text-red-600 transition"
           >
             <Power className="h-5 w-5" />
-            Log Out
+            {status === "authenticated" ? "Log Out" : "Log In"}
           </button>
         </div>
       </SheetContent>
