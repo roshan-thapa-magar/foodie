@@ -25,6 +25,7 @@ const Header = () => {
   const router = useRouter()
   const { closeModal, openModal } = useAuthModal()
   const {data: session , status} = useSession();
+  console.log(session)
 
   return (
     <header className="w-full shadow-sm">

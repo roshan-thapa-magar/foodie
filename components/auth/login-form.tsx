@@ -20,18 +20,19 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp"
+
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { X } from "lucide-react"
 import { useAuthModal } from "@/context/auth-modal-context"
-import {signIn} from "next-auth/react"
+import { signIn } from "next-auth/react"
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const [step, setStep] = useState<0 | 1 | 2>(0) // 0: Login, 1: Register, 2: OTP
   const [phone, setPhone] = useState("")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [otp, setOtp] = useState("")
-const { closeModal } = useAuthModal()
+  const { closeModal } = useAuthModal()
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,7 +60,7 @@ const { closeModal } = useAuthModal()
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-            <CardTitle>
+          <CardTitle>
             {step === 0 && "Login to your account"}
             {step === 1 && "Create an account"}
             {step === 2 && "Verify OTP"}
@@ -93,7 +94,7 @@ const { closeModal } = useAuthModal()
                     type="button"
                     onClick={() => signIn('google')}
                   >
-                     Login with Google
+                    Login with Google
                   </Button>
                 </Field>
               </FieldGroup>
