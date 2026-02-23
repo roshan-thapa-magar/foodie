@@ -26,6 +26,17 @@ const userSchema = new Schema(
       type: String,
       enum: ["user", "owner"],
     },
+    phone: {
+      type: String,
+      required: false,
+      default: null,
+    },
+
+    address: {
+      type: String,
+      required: false,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -6,18 +6,29 @@ import { User, Shield, Bell } from "lucide-react";
 import { ProfileSettings } from "./profile-settings";
 import { SecuritySettings } from "./security-settings";
 import { NotificationSettings } from "./notification-settings";
+import { useUser } from "@/context/UserContext";
+import { useSession, signOut } from "next-auth/react";
+import { useEffect } from "react";
 
 export default function SettingsPage() {
+    const { data: session, status } = useSession()
+    const { user, fetchUser, loading } = useUser();
+    const userId = session?.user?._id;
+    useEffect(() => {
+     if (userId) {
+        fetchUser(userId);
+      }
+    }, [userId]);
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-4  px-4">
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
           <Avatar className="h-16 w-16 sm:h-24 sm:w-24">
             <AvatarImage
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-867zNz6SjMBzPTPGDKxt31de7PPtFD.png"
+              src={user?.image || "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-867zNz6SjMBzPTPGDKxt31de7PPtFD.png"}
               alt="Profile"
             />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarFallback> {user?.name?.charAt(0) ?? "U"}</AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-2xl sm:text-4xl font-bold text-foreground">

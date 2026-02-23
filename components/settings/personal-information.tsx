@@ -1,6 +1,6 @@
 "use client";
 
-import type React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -11,38 +11,70 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Save } from "lucide-react";
+import { Camera, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
+import { useUser } from "@/context/UserContext";
+import moment from "moment";
+import dynamic from "next/dynamic";
 
-interface PersonalData {
+// Dynamic import to prevent SSR errors
+const AddressMap = dynamic(() => import("./address-map").then(mod => ({ default: mod.AddressMap })), {
+  ssr: false,
+  loading: () => <div className="h-96 bg-muted rounded-lg flex items-center justify-center">Loading map...</div>
+});
+
+interface ProfileData {
   name: string;
   email: string;
   contactNumber: string;
+  joinDate: string;
+  accountUpdated: string;
   address: string;
   profileImage: string;
-  joinDate: string;
-  accountExpiryDate: string;
 }
 
-interface PersonalInformationProps {
-  profileData: PersonalData;
-  setProfileData: (
-    data: PersonalData | ((prev: PersonalData) => PersonalData)
-  ) => void;
-}
+export function PersonalInformation() {
+  const { data: session } = useSession();
+  const { user, fetchUser, updateUser, loading } = useUser();
+  const userId = session?.user?._id;
 
-export function PersonalInformation({
-  profileData,
-  setProfileData,
-}: PersonalInformationProps) {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success("Profile Updated", {
-      description: "Your profile information has been successfully updated.",
-    });
-  };
+  const [profileData, setProfileData] = useState<ProfileData>({
+    name: "",
+    email: "",
+    contactNumber: "",
+    joinDate: "",
+    accountUpdated: "",
+    address: "",
+    profileImage: "",
+  });
+
+  // Fetch user when userId becomes available
+  useEffect(() => {
+    if (userId) fetchUser(userId);
+  }, [userId, fetchUser]);
+
+  // Sync profileData with fetched user
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || "",
+        email: user.email || "",
+        contactNumber: user.phone || "",
+        joinDate: user.createdAt
+          ? moment(user.createdAt).format("MMMM Do, YYYY, h:mm A")
+          : "",
+        accountUpdated: user.updatedAt
+          ? moment(user.updatedAt).format("MMMM Do, YYYY, h:mm A")
+          : "",
+        address: user.address || "",
+        profileImage:
+          user.image ||
+          "https://res.cloudinary.com/dzbtzumsd/image/upload/v1758364107/users/ew23jqr9zvvjmsiialpk.jpg",
+      });
+    }
+  }, [user]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -58,6 +90,56 @@ export function PersonalInformation({
     }
   };
 
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      return toast.error("Geolocation is not supported by your browser");
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+          const data = await res.json();
+          if (data?.display_name) {
+            setProfileData((prev) => ({
+              ...prev,
+              address: data.display_name,
+            }));
+            toast.success("Current location selected!");
+          } else {
+            toast.error("Unable to get address from coordinates");
+          }
+        } catch (err) {
+          toast.error("Failed to fetch location address");
+        }
+      },
+      () => {
+        toast.error("Failed to get current location");
+      }
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!userId) return toast.error("User not loaded yet");
+
+    const { success, message } = await updateUser(userId, {
+      name: profileData.name,
+      image: profileData.profileImage,
+      address: profileData.address,
+      phone: profileData.contactNumber,
+    });
+
+    if (success) {
+      toast.success(message || "Profile updated successfully!");
+    } else {
+      toast.error(message || "Failed to update profile");
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -68,12 +150,10 @@ export function PersonalInformation({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Avatar className="h-16 w-16 sm:h-20 sm:w-20">
-              <AvatarImage
-                src={profileData.profileImage || "/placeholder.svg"}
-                alt="Profile"
-              />
+              <AvatarImage src={profileData.profileImage} alt="Profile" />
               <AvatarFallback>
                 {profileData.name
                   .split(" ")
@@ -101,6 +181,7 @@ export function PersonalInformation({
             </div>
           </div>
 
+          {/* Form Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
@@ -120,9 +201,7 @@ export function PersonalInformation({
                 id="email"
                 type="email"
                 value={profileData.email}
-                onChange={(e) =>
-                  setProfileData((prev) => ({ ...prev, email: e.target.value }))
-                }
+                disabled
                 placeholder="Enter your email"
               />
             </div>
@@ -144,51 +223,56 @@ export function PersonalInformation({
 
             <div className="space-y-2">
               <Label htmlFor="join-date">Join Date</Label>
-              <Input
-                id="join-date"
-                value={profileData.joinDate}
-                onChange={(e) =>
-                  setProfileData((prev) => ({
-                    ...prev,
-                    joinDate: e.target.value,
-                  }))
-                }
-                placeholder="Enter your join date"
-              />
+              <Input id="join-date" value={profileData.joinDate} disabled />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expiry-date">Account Expiry Date</Label>
+              <Label htmlFor="account-updated">Account Updated</Label>
               <Input
-                id="expiry-date"
-                value={profileData.accountExpiryDate}
-                onChange={(e) =>
-                  setProfileData((prev) => ({
-                    ...prev,
-                    accountExpiryDate: e.target.value,
-                  }))
-                }
-                placeholder="Enter your account expiry date"
+                id="account-updated"
+                value={profileData.accountUpdated}
+                disabled
               />
             </div>
           </div>
 
+          {/* Personal Address with Map */}
           <div className="space-y-2">
             <Label htmlFor="address">Personal Address</Label>
-            <Textarea
-              id="address"
-              value={profileData.address}
-              onChange={(e) =>
-                setProfileData((prev) => ({ ...prev, address: e.target.value }))
-              }
-              placeholder="Enter your personal address"
-              rows={3}
-            />
+            <div className="flex gap-2 items-center">
+              <Input
+                id="address"
+                value={profileData.address}
+                onChange={(e) =>
+                  setProfileData((prev) => ({ ...prev, address: e.target.value }))
+                }
+                placeholder="Enter your address"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                variant="outline"
+                className="whitespace-nowrap"
+              >
+                Use Current Location
+              </Button>
+            </div>
+
+            {profileData.address && (
+              <div className="rounded-lg border overflow-hidden mt-2">
+                <AddressMap address={profileData.address} />
+              </div>
+            )}
           </div>
 
-          <Button type="submit" className="w-full sm:w-auto">
+          {/* Submit */}
+          <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
             <Save className="h-4 w-4 mr-2" />
-            Save Personal Information
+            {loading ? <span className="flex items-center gap-2">
+              Saving
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </span> : "Save Personal Information"}
           </Button>
         </form>
       </CardContent>

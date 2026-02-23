@@ -1,37 +1,64 @@
 'use client';
-
+import { useEffect, useState, useRef } from "react";
 import Image from 'next/image';
-import React, { useState, useRef } from 'react';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { Pencil } from 'lucide-react';
+import { Loader2, Pencil } from 'lucide-react';
+import { useUser } from "@/context/UserContext";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 export default function AccountDetails() {
-  const [profileImage, setProfileImage] = useState(
-    "https://www.recipetineats.com/tachyon/2023/12/Seafood-Platter_Sony-5.jpg"
-  );
+  const { data: session } = useSession();
+  const { user, fetchUser, updateUser, loading } = useUser();
+  const userId = session?.user?._id;
+
+  // Local state for form
+  const [fullName, setFullName] = useState("");
+  const [profileImage, setProfileImage] = useState<string | undefined>();
   const [hovering, setHovering] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch user when session ID is available
+  useEffect(() => {
+    if (userId) fetchUser(userId);
+  }, [userId]);
+
+  // Prefill form when user data is loaded
+  useEffect(() => {
+    if (user) {
+      setFullName(user.name || "");
+      setProfileImage(user.image);
+    }
+  }, [user]);
+
+  const handleUpdate = async () => {
+    if (!userId) return;
+    const result = await updateUser(userId, { name: fullName, image: profileImage });
+    if (result.success) {
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+  };
+
+  // Handle profile image change
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setProfileImage(e.target?.result as string);
-      };
+      reader.onload = (e) => setProfileImage(e.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleImageClick = () => {
-    fileInputRef.current?.click();
-  };
+  const handleImageClick = () => fileInputRef.current?.click();
 
   return (
     <>
       <span className="text-2xl font-extrabold">Account Details</span>
-      <p className='font-bold'>Personal Information</p>
+      <p className='font-bold mt-2'>Personal Information</p>
+
       <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mt-4">
         {/* Left Column */}
         <div className="space-y-6">
@@ -52,8 +79,7 @@ export default function AccountDetails() {
             {/* Pencil Icon on Hover */}
             <button
               onClick={handleImageClick}
-              className={`absolute inset-0 rounded-full bg-black/50 flex items-center justify-center transition-opacity duration-200 ${hovering ? 'opacity-100' : 'md:opacity-0'
-                }`}
+              className={`absolute inset-0 cursor-pointer rounded-full bg-black/50 flex items-center justify-center transition-opacity duration-200 ${hovering ? 'opacity-100' : 'md:opacity-0'}`}
               title="Change profile picture"
             >
               <Pencil className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -78,25 +104,32 @@ export default function AccountDetails() {
             <Input
               id="fullName"
               className="mt-1"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               placeholder="Enter your full name"
             />
           </div>
 
-          {/* Email Input */}
+          {/* Email Input (read-only) */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email
             </label>
             <Input
               id="email"
-              className="mt-1"
-              placeholder="Enter your email"
+              className="mt-1 bg-gray-100 cursor-not-allowed"
+              value={user?.email || ""}
+              readOnly
+              placeholder="Email"
             />
           </div>
 
           {/* Update Button */}
-          <Button variant="default" className="w-full">
-            Update Details
+          <Button variant="default" className="w-full cursor-pointer" onClick={handleUpdate} disabled={loading}>
+            {loading ? <span className="flex items-center gap-2">
+              Saving
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </span> : "Update Details"}
           </Button>
         </div>
 

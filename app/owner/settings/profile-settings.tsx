@@ -6,15 +6,15 @@ import { PersonalInformation } from "@/components/settings/personal-information"
 import { RestaurantInformation } from "@/components/settings/restaurant-information";
 
 export function ProfileSettings() {
-  const [profileData, setProfileData] = useState({
-    name: "John Doe",
-    email: "john@restaurant.com",
-    contactNumber: "+1 (555) 123-4567",
-    address: "123 Main Street, City, State 12345",
-    profileImage: "/restaurant-owner-profile.png",
-    joinDate: "January 15, 2023",
-    accountExpiryDate: "January 15, 2025",
-  });
+  // const [profileData, setProfileData] = useState({
+  //   name: "John Doe",
+  //   email: "john@restaurant.com",
+  //   contactNumber: "+1 (555) 123-4567",
+  //   address: "123 Main Street, City, State 12345",
+  //   profileImage: "/restaurant-owner-profile.png",
+  //   joinDate: "January 15, 2023",
+  //   accountExpiryDate: "January 15, 2025",
+  // });
 
   const [restaurantData, setRestaurantData] = useState({
     restaurantName: "Delicious Bites",
@@ -39,13 +39,13 @@ export function ProfileSettings() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <AccountInformation
+      {/* <AccountInformation
         joinDate={profileData.joinDate}
         accountExpiryDate={profileData.accountExpiryDate}
-      />
+      /> */}
       <PersonalInformation
-        profileData={profileData}
-        setProfileData={setProfileData}
+        // profileData={profileData}
+        // setProfileData={setProfileData}
       />
       <RestaurantInformation
         restaurantData={restaurantData}

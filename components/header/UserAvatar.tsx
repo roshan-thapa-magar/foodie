@@ -8,17 +8,26 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useRouter } from "next/navigation"
 import { useSession, signOut } from "next-auth/react";
+import { useEffect } from "react";
+import { useUser } from "@/context/UserContext";
 
 const UserAvatar = () => {
   const router = useRouter()
   const { data: session, status } = useSession()
+  const { user, fetchUser, loading } = useUser();
+  const userId = session?.user?._id;
+  useEffect(() => {
+   if (userId) {
+      fetchUser(userId); // fetch only if ID exists
+    }
+  }, [userId]);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="w-6 h-6 cursor-pointer">
-          <AvatarImage src={session?.user?.image || "https://github.com/shadcn.png"} />
+          <AvatarImage src={user?.image || "https://github.com/shadcn.png"} />
           <AvatarFallback>
-            {session?.user?.name?.charAt(0) ?? "U"}
+            {user?.name?.charAt(0) ?? "U"}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>

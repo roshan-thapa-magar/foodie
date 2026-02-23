@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider"
 import { AuthModalProvider } from "@/context/auth-modal-context"
 import { NextAuthProvider } from "./Providers";
+import { UserProvider } from "@/context/UserContext";
+import { Toaster } from "@/components/ui/sonner"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +40,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
+            <UserProvider>
             {children}
+            <Toaster />
+            </UserProvider>
           </ThemeProvider>
         </AuthModalProvider>
         </NextAuthProvider>
