@@ -14,8 +14,10 @@ export interface ItemPayload {
   }[];
 }
 
-export const getItems = async () => {
-  const res = await api.get("/items");
+export const getItems = async (type?: string) => {
+  const res = await api.get("/items", {
+    params: { type }
+  });
   return res.data.items;
 };
 

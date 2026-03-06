@@ -80,11 +80,16 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectMongoDB();
 
-    const items = await Items.find({});
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get("type");
+
+    const query = type ? { itemType: type } : {};
+
+    const items = await Items.find(query);
 
     return NextResponse.json(
       { message: "Items fetched successfully", items },
@@ -102,3 +107,5 @@ export async function GET() {
     );
   }
 }
+
+

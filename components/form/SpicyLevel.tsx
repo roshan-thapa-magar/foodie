@@ -3,49 +3,35 @@
 import { useState } from "react"
 import { Slider } from "@/components/ui/slider"
 
-export default function SpicyLevel() {
-  const [value, setValue] = useState([0]) // start at 0 = NO SPICY
+interface SpicyLevelProps {
+  title: string            // The title of the topping section, e.g., "Drink Selection"
+  items: { title: string; price: number; _id?: string }[] // options
+}
 
-  const levels = {
-    0: "NO SPICY",
-    1: "LOW",
-    2: "MEDIUM",
-    3: "HIGH",
-  } as const
+export default function SpicyLevel({ title, items }: SpicyLevelProps) {
+  const [value, setValue] = useState([0]) // start at first item
 
-  const currentLevel = levels[value[0] as 0 | 1 | 2 | 3]
+  // Get the current selected item's title
+  const currentItem = items[value[0]]?.title || "None"
 
   return (
-    <div className="w-full max-w-md ">
+    <div className="w-full max-w-md">
 
       {/* Title */}
-      <h2 className="text-xl font-semibold mt-4">Spicy Level</h2>
+      <h2 className="text-xl font-semibold mt-4">{title}</h2>
 
-      {/* Current Level */}
+      {/* Current Selection */}
       <div className="text-center text-2xl font-bold text-purple-600">
-        {currentLevel}
+        {currentItem}
       </div>
 
       {/* Slider */}
       <div className="relative pt-6">
-        {/* Flame only if spicy > 0 */}
-        {value[0] > 0 && (
-          <div
-            className="absolute top-0 text-3xl transition-all duration-300"
-            style={{
-              left: `${(value[0] / 3) * 100}%`, // left-to-right
-              transform: "translateX(-50%)",
-            }}
-          >
-            🔥
-          </div>
-        )}
-
         <Slider
           value={value}
           onValueChange={setValue}
           min={0}
-          max={3}
+          max={Math.max(0, items.length - 1)}
           step={1}
           className="
             [&>span:first-child]:bg-red-500

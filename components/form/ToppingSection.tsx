@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 
 interface ToppingItem {
-  name: string
+  title: string
   price: number
 }
 
@@ -35,7 +35,7 @@ export default function ToppingSection({
                 <Checkbox id={checkboxId} name={checkboxId} />
 
                 <FieldLabel htmlFor={checkboxId}>
-                  {item.name}
+                  {item.title}
                 </FieldLabel>
               </div>
 
