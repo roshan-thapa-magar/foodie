@@ -85,12 +85,12 @@ export async function PUT(
   context: { params: Promise<Params> }
 ) {
   try {
-    // ✅ Get the item ID
     const { id } = await context.params;
 
     await connectMongoDB();
 
     const item = await Items.findById(id);
+
     if (!item) {
       return NextResponse.json(
         { message: "Item not found" },
@@ -98,54 +98,53 @@ export async function PUT(
       );
     }
 
-    // ✅ Parse request body
-    const body = await request.json();
-    const {
-      itemType,
-      itemName,
-      description,
-      price,
-      category,
-      image: newImage,
-      toppings,
-    } = body;
-    console.log(itemType,
-      itemName,
-      description,
-      price,
-      category,
-      toppings,)
+    // ✅ Parse FormData
+    const formData = await request.formData();
 
-    // ✅ Update image if provided
-    if (newImage) {
-      let updatedImage = item.image;
+    const itemType = formData.get("itemType") as string;
+    const itemName = formData.get("itemName") as string;
+    const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const price = Number(formData.get("price"));
+    const toppingsRaw = formData.get("toppings") as string;
+    const newImage = formData.get("image") as File | null;
 
+    const toppings = toppingsRaw ? JSON.parse(toppingsRaw) : [];
+
+    console.log(itemType, itemName, description, price, category, toppings);
+
+    // ✅ Replace image if new image provided
+    if (newImage && newImage.size > 0) {
+
+      // Delete old image from Cloudinary
       if (item.image) {
-        // Extract public_id from existing image
         const parts = item.image.split("/");
         const fileName = parts.pop()?.split(".")[0];
         const folder = parts.pop();
+
         if (folder && fileName) {
           const publicId = `${folder}/${fileName}`;
-          const uploadResponse = await cloudinary.uploader.upload(newImage, {
-            public_id: publicId,
-            overwrite: true,
-            resource_type: "image",
-          });
-          updatedImage = uploadResponse.secure_url;
+          await cloudinary.uploader.destroy(publicId);
         }
-      } else {
-        // Upload new image if no previous image exists
-        const uploadResponse = await cloudinary.uploader.upload(newImage, {
-          folder: "item",
-        });
-        updatedImage = uploadResponse.secure_url;
       }
 
-      item.image = updatedImage;
+      // Upload new image
+      const bytes = await newImage.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const upload = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream({ folder: "item" }, (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          })
+          .end(buffer);
+      });
+
+      item.image = upload.secure_url;
     }
 
-    // ✅ Update other fields if provided
+    // ✅ Update fields
     if (itemType) item.itemType = itemType;
     if (itemName) item.itemName = itemName;
     if (description !== undefined) item.description = description;
@@ -153,18 +152,25 @@ export async function PUT(
     if (category) item.category = category;
     if (toppings) item.toppings = toppings;
 
-    // ✅ Save updated item
     await item.save();
 
     return NextResponse.json(
-      { message: "Item updated successfully", item },
+      {
+        message: "Item updated successfully",
+        item,
+      },
       { status: 200 }
     );
   } catch (error: unknown) {
     console.error(error);
+
     const errMsg = error instanceof Error ? error.message : "Unknown error";
+
     return NextResponse.json(
-      { message: "Failed to update item", error: errMsg },
+      {
+        message: "Failed to update item",
+        error: errMsg,
+      },
       { status: 500 }
     );
   }

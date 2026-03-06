@@ -6,7 +6,6 @@ import cloudinary from "@/lib/cloudinary";
 export async function POST(request: NextRequest) {
   try {
     const { categoryName, image } = await request.json();
-    console.log(categoryName, image);
     await connectMongoDB();
 
     // Check if categoryName already exists

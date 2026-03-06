@@ -49,11 +49,6 @@ const itemsSchema = new Schema(
           default: "multiple",
         },
 
-        required: {
-          type: Boolean,
-          default: false,
-        },
-
         items: [
           {
             title: {
@@ -62,7 +57,6 @@ const itemsSchema = new Schema(
             },
             price: {
               type: Number,
-              default: 0,
             },
           },
         ],
@@ -74,3 +68,6 @@ const itemsSchema = new Schema(
 
 const Items = models.Items || model("Items", itemsSchema);
 export default Items;
+
+
+

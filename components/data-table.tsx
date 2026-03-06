@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useMemo, ChangeEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,19 +43,17 @@ export interface ColumnDefinition<T> {
   render?: (item: T) => React.ReactNode;
 }
 
-interface DataTableProps<T extends { sn: number }> {
+interface DataTableProps<T extends Record<string, any>> {
   data: T[];
   columns: ColumnDefinition<T>[];
   initialColumnVisibility: Record<string, boolean>;
   searchPlaceholder: string;
   addLabel: string;
   onAddClick: () => void;
-  onEditClick?: (item: T) => void;
-  onDeleteClick?: (item: T) => void;
   searchKey: keyof T;
 }
 
-export default function DataTable<T extends { sn: number }>({
+export default function DataTable<T extends Record<string, any>>({
   data,
   columns,
   initialColumnVisibility,
@@ -72,9 +71,7 @@ export default function DataTable<T extends { sn: number }>({
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) {
-      return data;
-    }
+    if (!searchTerm) return data;
     return data.filter((item) =>
       String(item[searchKey]).toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -82,26 +79,22 @@ export default function DataTable<T extends { sn: number }>({
 
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  const paginatedData = filteredData.slice(startIndex, endIndex);
+  const paginatedData = filteredData.slice(startIndex, startIndex + rowsPerPage);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      const newSelected = new Set(paginatedData.map((item) => item.sn));
+      const newSelected = new Set(paginatedData.map((_, index) => startIndex + index));
       setSelectedRows(newSelected);
     } else {
       setSelectedRows(new Set());
     }
   };
 
-  const handleSelectRow = (sn: number, checked: boolean) => {
+  const handleSelectRow = (rowIndex: number, checked: boolean) => {
     setSelectedRows((prev) => {
       const newSelected = new Set(prev);
-      if (checked) {
-        newSelected.add(sn);
-      } else {
-        newSelected.delete(sn);
-      }
+      if (checked) newSelected.add(rowIndex);
+      else newSelected.delete(rowIndex);
       return newSelected;
     });
   };
@@ -120,15 +113,14 @@ export default function DataTable<T extends { sn: number }>({
 
   const allRowsSelected =
     paginatedData.length > 0 &&
-    paginatedData.every((item) => selectedRows.has(item.sn));
+    paginatedData.every((_, index) => selectedRows.has(startIndex + index));
   const someRowsSelected =
-    paginatedData.some((item) => selectedRows.has(item.sn)) && !allRowsSelected;
-
-  console.log(someRowsSelected);
+    paginatedData.some((_, index) => selectedRows.has(startIndex + index)) &&
+    !allRowsSelected;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header Section - Fixed */}
+      {/* Header Section */}
       <div className="flex-shrink-0 p-4">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="relative w-full sm:w-1/2">
@@ -175,8 +167,8 @@ export default function DataTable<T extends { sn: number }>({
         </div>
       </div>
 
-      {/* Table Section - Scrollable */}
-      <div className="flex-1 overflow-auto px-4 hide-scrollbar ">
+      {/* Table Section */}
+      <div className="flex-1 overflow-auto px-4 hide-scrollbar">
         <div className="border rounded-md">
           <Table>
             <TableHeader>
@@ -189,6 +181,7 @@ export default function DataTable<T extends { sn: number }>({
                     className="translate-y-[2px]"
                   />
                 </TableHead>
+                <TableHead className="w-[50px] text-center">SN</TableHead>
                 {columns
                   .filter((col) => columnVisibility[col.id])
                   .map((column) => (
@@ -202,41 +195,48 @@ export default function DataTable<T extends { sn: number }>({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedData.map((item) => (
-                <TableRow key={item.sn}>
-                  <TableCell>
-                    <Checkbox
-                      checked={selectedRows.has(item.sn)}
-                      onCheckedChange={(checked) =>
-                        handleSelectRow(item.sn, checked as boolean)
-                      }
-                      aria-label={`Select row ${item.sn}`}
-                      className="translate-y-[2px]"
-                    />
-                  </TableCell>
-                  {columns
-                    .filter((col) => columnVisibility[col.id])
-                    .map((column) => (
-                      <TableCell
-                        key={column.id}
-                        className={
-                          column.align === "center" ? "text-center" : ""
-                        }
-                      >
-                        {column.render
-                          ? column.render(item)
-                          : // @ts-expect-error Accessing property by string key
-                            item[column.id]}
-                      </TableCell>
-                    ))}
-                </TableRow>
-              ))}
-            </TableBody>
+  {paginatedData.length === 0 ? (
+    <TableRow>
+      <TableCell colSpan={columns.filter(col => columnVisibility[col.id]).length + 2} className="text-center py-4">
+        No category found
+      </TableCell>
+    </TableRow>
+  ) : (
+    paginatedData.map((item, index) => {
+      const rowIndex = startIndex + index;
+      return (
+        <TableRow key={rowIndex}>
+          <TableCell>
+            <Checkbox
+              checked={selectedRows.has(rowIndex)}
+              onCheckedChange={(checked) =>
+                handleSelectRow(rowIndex, checked as boolean)
+              }
+              aria-label={`Select row ${rowIndex + 1}`}
+              className="translate-y-[2px]"
+            />
+          </TableCell>
+          <TableCell className="text-center">{rowIndex + 1}</TableCell>
+          {columns
+            .filter((col) => columnVisibility[col.id])
+            .map((column) => (
+              <TableCell
+                key={column.id}
+                className={column.align === "center" ? "text-center" : ""}
+              >
+                {column.render ? column.render(item) : item[column.id]}
+              </TableCell>
+            ))}
+        </TableRow>
+      );
+    })
+  )}
+</TableBody>
           </Table>
         </div>
       </div>
 
-      {/* Footer Section - Fixed */}
+      {/* Footer Section */}
       <div className="flex-shrink-0 border-t bg-background p-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm">
