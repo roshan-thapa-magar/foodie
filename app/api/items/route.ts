@@ -86,20 +86,28 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
 
-    const type = searchParams.get("type");
+    const type = searchParams.get("itemType");
     const sort = searchParams.get("sort");
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
 
-    const query = type ? { itemType: type } : {};
+    let query: any = {};
 
-    let sortOption: any = {};
+    // Type filter
+    if (type) query.itemType = type;
 
-    if (sort === "price_low") {
-      sortOption = { price: 1 }; // Low → High
-    } else if (sort === "price_high") {
-      sortOption = { price: -1 }; // High → Low
-    } else if (sort === "popular") {
-      sortOption = { orders: -1 }; // Most ordered first
+    // Price range filter
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
     }
+
+    // Sort option
+    let sortOption: any = {};
+    if (sort === "price_low") sortOption = { price: 1 };
+    else if (sort === "price_high") sortOption = { price: -1 };
+    else if (sort === "popular") sortOption = { ordersCount: -1 }; // ensure schema has this
 
     const items = await Items.find(query).sort(sortOption);
 
@@ -109,7 +117,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error(error);
-
     return NextResponse.json(
       {
         message: "Failed to fetch items",

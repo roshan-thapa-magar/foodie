@@ -9,14 +9,17 @@ export default function ComboMeal() {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   console.log(items)
-  const fetchComboItems = async () => {
-    try {
-      const data = await getItems("combo");
-      setItems(data); // <-- store the full items array
-    } catch (error) {
-      console.error("Failed to fetch combo items", error);
-    }
-  };
+const fetchComboItems = async () => {
+  try {
+    const data = await getItems({
+      itemType: "combo",
+    });
+
+    setItems(data);
+  } catch (error) {
+    console.error("Failed to fetch combo items", error);
+  }
+};
 
   useEffect(() => {
     fetchComboItems();

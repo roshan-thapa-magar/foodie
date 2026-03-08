@@ -17,6 +17,10 @@ import { getCategories } from "@/services/category.api";
 interface FilterSidebarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
+  minPrice: number | "";
+  maxPrice: number | "";
+  setMinPrice: (val: number | "") => void;
+  setMaxPrice: (val: number | "") => void;
 }
 
 /* -------------------- Reusable Category List -------------------- */
@@ -63,7 +67,7 @@ function CategoryList({ prefix }: { prefix: string }) {
 }
 
 /* -------------------- Main Sidebar -------------------- */
-export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
+export default function FilterSidebar({ open, setOpen,minPrice,setMinPrice,maxPrice,setMaxPrice }: FilterSidebarProps) {
   return (
     <>
       {/* ================= DESKTOP SIDEBAR ================= */}
@@ -88,9 +92,19 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           <div className="border-t mt-4 pt-4">
             <span className="font-medium block mb-2">Prices (Rs.)</span>
             <div className="flex items-center gap-2">
-              <Input placeholder="Min" />
+              <Input
+                placeholder="Min"
+                type="number"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : "")}
+              />
               <span>:</span>
-              <Input placeholder="Max" />
+              <Input
+                placeholder="Max"
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : "")}
+              />
             </div>
           </div>
 
@@ -122,9 +136,19 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           <div className="border-t p-4 bg-background">
             <span className="font-medium block mb-2">Prices (Rs.)</span>
             <div className="flex items-center gap-2">
-              <Input placeholder="Min" />
+              <Input
+                placeholder="Min"
+                type="number"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : "")}
+              />
               <span>:</span>
-              <Input placeholder="Max" />
+              <Input
+                placeholder="Max"
+                type="number"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : "")}
+              />
             </div>
           </div>
 

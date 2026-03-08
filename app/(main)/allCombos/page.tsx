@@ -13,8 +13,12 @@ export default function page() {
   console.log(items)
   const fetchComboItems = async () => {
     try {
-      const data = await getItems("combo",sort);
-      setItems(data); // <-- store the full items array
+      const data = await getItems({
+        itemType: "combo",
+        sort: sort,
+      });
+
+      setItems(data);
     } catch (error) {
       console.error("Failed to fetch combo items", error);
     }

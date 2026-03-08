@@ -9,14 +9,18 @@ export default function page() {
     const [items, setItems] = useState<any[]>([]);
       const [sort, setSort] = useState<string>("default");
     
-    const fetchComboItems = async () => {
-      try {
-        const data = await getItems("single",sort);
-        setItems(data); // <-- store the full items array
-      } catch (error) {
-        console.error("Failed to fetch combo items", error);
-      }
-    };
+      const fetchComboItems = async () => {
+        try {
+          const data = await getItems({
+            itemType: "single",
+            sort: sort,
+          });
+    
+          setItems(data);
+        } catch (error) {
+          console.error("Failed to fetch combo items", error);
+        }
+      };
   
     useEffect(() => {
       fetchComboItems();
