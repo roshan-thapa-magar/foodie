@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,16 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { X } from "lucide-react";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
-
-/* -------------------- Categories -------------------- */
-
-const categories = [
-  "All Categories","Momo","Chowmein","Pizza","Burger",
-  "Fried Rice","Pasta","Sandwich","Soup","Snacks",
-  "Drinks","Dessert","BBQ","Salad","Rolls","Thukpa",
-  "Sekuwa","Noodles","Biryani","Ice Cream","Coffee",
-  "Tea","Juice","Smoothie",
-];
+import { getCategories } from "@/services/category.api";
 
 interface FilterSidebarProps {
   open: boolean;
@@ -28,13 +20,31 @@ interface FilterSidebarProps {
 }
 
 /* -------------------- Reusable Category List -------------------- */
-
 function CategoryList({ prefix }: { prefix: string }) {
-  return (
-    <FieldGroup className="flex-1 overflow-y-auto p-4 space-y-3 hide-scrollbar !gap-2 !p-0">
-      {categories.map((item, index) => {
-        const checkboxId = `${prefix}-category-${index}`;
+  const [fetchedCategories, setFetchedCategories] = useState<{ _id: string; categoryName: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const fetchCategory = async () => {
+    try {
+      const data = await getCategories();
+      setFetchedCategories(data);
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategory();
+  }, []);
+
+  if (loading) return <div className="p-4 text-center">Loading categories...</div>;
+
+  return (
+    <FieldGroup className="flex-1 overflow-y-auto space-y-3 hide-scrollbar !gap-2 !p-0">
+      {fetchedCategories.map((item, index) => {
+        const checkboxId = `${prefix}-category-${index}`;
         return (
           <Field
             key={checkboxId}
@@ -42,9 +52,8 @@ function CategoryList({ prefix }: { prefix: string }) {
             className="flex items-center gap-2"
           >
             <Checkbox id={checkboxId} name={checkboxId} />
-
             <FieldLabel htmlFor={checkboxId}>
-              {item}
+              {item.categoryName}
             </FieldLabel>
           </Field>
         );
@@ -54,7 +63,6 @@ function CategoryList({ prefix }: { prefix: string }) {
 }
 
 /* -------------------- Main Sidebar -------------------- */
-
 export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
   return (
     <>
@@ -65,7 +73,6 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <span className="text-lg font-bold">FILTER</span>
-
             <button
               className="text-sm text-muted-foreground hover:underline"
               onClick={() => setOpen(false)}
@@ -80,7 +87,6 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           {/* Price Filter */}
           <div className="border-t mt-4 pt-4">
             <span className="font-medium block mb-2">Prices (Rs.)</span>
-
             <div className="flex items-center gap-2">
               <Input placeholder="Min" />
               <span>:</span>
@@ -99,7 +105,6 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           <DrawerHeader className="border-b">
             <div className="flex justify-between items-center">
               <DrawerTitle>FILTERS</DrawerTitle>
-
               <DrawerClose asChild>
                 <button>
                   <X />
@@ -116,7 +121,6 @@ export default function FilterSidebar({ open, setOpen }: FilterSidebarProps) {
           {/* Price Filter */}
           <div className="border-t p-4 bg-background">
             <span className="font-medium block mb-2">Prices (Rs.)</span>
-
             <div className="flex items-center gap-2">
               <Input placeholder="Min" />
               <span>:</span>

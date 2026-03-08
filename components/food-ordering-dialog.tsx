@@ -23,7 +23,7 @@ import ToppingSection from "./form/ToppingSection";
 
 interface FoodOrderingDialogProps {
   item: {
-    name: string;
+    itemName: string;
     image: string;
     price: string | number;
     description: string;
@@ -36,6 +36,8 @@ interface FoodOrderingDialogProps {
   };
   children: ReactNode;
 }
+
+
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
@@ -52,13 +54,13 @@ function useMediaQuery(query: string) {
 export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) {
   const isMobile = useMediaQuery("(max-width: 600px)");
   const [quantity, setQuantity] = useState(1);
-
+  
   const Content = () => (
     <div className="flex flex-col h-full">
       <div className="overflow-y-auto flex-1 p-4 md:p-0 space-y-2 md:mb-4 hide-scrollbar">
         <Image
           src={item.image}
-          alt={item.name}
+          alt={item.itemName}
           height={100}
           width={100}
           className="w-full h-[30vh] object-cover rounded-lg"
@@ -75,7 +77,7 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
                 items={topping.items || []}
               />
             ) : (
-              <SpicyLevel key={idx} title={topping.toppingTitle} items={topping.items || []} />
+              <SpicyLevel key={idx}  title={topping.toppingTitle} items={topping.items || []} />
             )
           )}
         </div>
@@ -111,13 +113,13 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
       <Drawer>
         <DrawerTrigger asChild>{children}</DrawerTrigger>
         <DrawerContent className="h-auto z-[1100]">
-          <DrawerHeader className="flex justify-between items-center">
-            <DrawerTitle>{item.name}</DrawerTitle>
-            <DrawerClose asChild>
-              <button>
+          <DrawerHeader >
+            <div className="flex justify-between items-center">
+              <DrawerTitle>{item.itemName}</DrawerTitle>
+              <DrawerClose asChild>
                 <X />
-              </button>
-            </DrawerClose>
+              </DrawerClose>
+            </div>
           </DrawerHeader>
           <div className="overflow-y-auto">
             <Content />
@@ -132,9 +134,9 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
         <DialogHeader>
-          <DialogTitle>{item.name}</DialogTitle>
+          <DialogTitle>{item.itemName}</DialogTitle>
         </DialogHeader>
-        <div className="overflow-y-auto h-[60vh]">
+        <div className="overflow-y-auto max-h-[60vh]">
           <Content />
         </div>
       </DialogContent>

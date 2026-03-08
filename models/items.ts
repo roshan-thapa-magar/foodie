@@ -32,6 +32,10 @@ const itemsSchema = new Schema(
       type: String,
       default: "",
     },
+    ordersCount: {
+      type: Number,
+      default: 0,
+    },
 
     /* ------------ TOPPINGS SYSTEM ------------ */
 

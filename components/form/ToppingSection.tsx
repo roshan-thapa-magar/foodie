@@ -17,6 +17,7 @@ export default function ToppingSection({
   title,
   items,
 }: ToppingSectionProps) {
+  console.log("hello",items)
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-extrabold">{title}</h1>

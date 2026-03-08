@@ -85,11 +85,23 @@ export async function GET(request: NextRequest) {
     await connectMongoDB();
 
     const { searchParams } = new URL(request.url);
+
     const type = searchParams.get("type");
+    const sort = searchParams.get("sort");
 
     const query = type ? { itemType: type } : {};
 
-    const items = await Items.find(query);
+    let sortOption: any = {};
+
+    if (sort === "price_low") {
+      sortOption = { price: 1 }; // Low → High
+    } else if (sort === "price_high") {
+      sortOption = { price: -1 }; // High → Low
+    } else if (sort === "popular") {
+      sortOption = { orders: -1 }; // Most ordered first
+    }
+
+    const items = await Items.find(query).sort(sortOption);
 
     return NextResponse.json(
       { message: "Items fetched successfully", items },
@@ -107,5 +119,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-
