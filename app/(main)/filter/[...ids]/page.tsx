@@ -11,19 +11,18 @@ export default function FilterPage() {
   const [sort, setSort] = useState<string>("default");
   const [minPrice, setMinPrice] = useState<number | "">("");
   const [maxPrice, setMaxPrice] = useState<number | "">("");
+  const fetchComboItems = async () => {
+    try {
+      const params: any = { sort };
+      if (minPrice !== "") params.minPrice = minPrice;
+      if (maxPrice !== "") params.maxPrice = maxPrice;
 
-const fetchComboItems = async () => {
-  try {
-    const params: any = { sort };
-    if (minPrice !== "") params.minPrice = minPrice;
-    if (maxPrice !== "") params.maxPrice = maxPrice;
-
-    const data = await getItems(params);
-    setItems(data);
-  } catch (error) {
-    console.error("Failed to fetch combo items", error);
-  }
-};
+      const data = await getItems(params);
+      setItems(data);
+    } catch (error) {
+      console.error("Failed to fetch combo items", error);
+    }
+  };
 
   useEffect(() => {
     fetchComboItems();

@@ -17,17 +17,16 @@ import { getCategories } from "@/services/category.api";
 interface FilterSidebarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  minPrice: number | "";
-  maxPrice: number | "";
-  setMinPrice: (val: number | "") => void;
-  setMaxPrice: (val: number | "") => void;
+  minPrice?: number | "";
+  maxPrice?: number | "";
+  setMinPrice?: (val: number | "") => void;
+  setMaxPrice?: (val: number | "") => void;
 }
 
 /* -------------------- Reusable Category List -------------------- */
 function CategoryList({ prefix }: { prefix: string }) {
   const [fetchedCategories, setFetchedCategories] = useState<{ _id: string; categoryName: string }[]>([]);
   const [loading, setLoading] = useState(true);
-
   const fetchCategory = async () => {
     try {
       const data = await getCategories();
@@ -96,14 +95,14 @@ export default function FilterSidebar({ open, setOpen,minPrice,setMinPrice,maxPr
                 placeholder="Min"
                 type="number"
                 value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => setMinPrice?.(e.target.value ? Number(e.target.value) : "")}
               />
               <span>:</span>
               <Input
                 placeholder="Max"
                 type="number"
                 value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => setMaxPrice?.(e.target.value ? Number(e.target.value) : "")}
               />
             </div>
           </div>
@@ -140,14 +139,14 @@ export default function FilterSidebar({ open, setOpen,minPrice,setMinPrice,maxPr
                 placeholder="Min"
                 type="number"
                 value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => setMinPrice?.(e.target.value ? Number(e.target.value) : "")}
               />
               <span>:</span>
               <Input
                 placeholder="Max"
                 type="number"
                 value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => setMaxPrice?.(e.target.value ? Number(e.target.value) : "")}
               />
             </div>
           </div>
