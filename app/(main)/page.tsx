@@ -9,5 +9,6 @@ export default function Page() {
     <Categories/>
     <ComboMeal/>
     <BestSellingItems/>
+    
   </div>;
 }
