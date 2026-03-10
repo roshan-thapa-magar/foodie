@@ -3,20 +3,23 @@ import React, { useEffect, useState } from 'react'
 import ComboItem from '../ComboItem';
 import { useRouter } from "next/navigation";
 import { getItems } from "@/services/items.api";
+import { ComboSkeleton } from "@/components/skeleton/ComboSkeleton";
 
 export default function BestSellingItems() {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
-  console.log(items)
+  const [loading, setLoading] = useState(true);
+
   const fetchComboItems = async () => {
     try {
       const data = await getItems({
         itemType: "single",
       });
-
       setItems(data);
     } catch (error) {
-      console.error("Failed to fetch combo items", error);
+      console.error("Failed to fetch best selling items", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -32,10 +35,14 @@ export default function BestSellingItems() {
           See all
         </p>
       </div>
+
       <div className="grid custom-grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
-        {items.map((item) => (
-          <ComboItem key={item._id} item={{ ...item }} className="w-full" />
-        ))}
+        {loading 
+          ? <ComboSkeleton count={8} /> 
+          : items.map((item) => (
+              <ComboItem key={item._id} item={{ ...item }} className="w-full" />
+            ))
+        }
       </div>
     </div>
   )

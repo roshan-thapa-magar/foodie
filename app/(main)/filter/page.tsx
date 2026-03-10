@@ -73,7 +73,17 @@ export default function FilterPage() {
         />
       </aside>
 
-      <ComboGrid items={items} sort={sort} setSort={setSort} />
+      <ComboGrid
+        items={items}
+        sort={sort}
+        setSort={setSort}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        setMinPrice={setMinPrice}
+        setMaxPrice={setMaxPrice}
+        selectedCid={selectedCid}
+        setSelectedCid={setSelectedCid}
+      />
     </div>
   )
 }
