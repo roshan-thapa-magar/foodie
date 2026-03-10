@@ -304,6 +304,7 @@ const Bag = () => {
                                   key={i}
                                   title={topping.toppingTitle}
                                   items={topping.items || []}
+                                  selectedItem={topping.selectedItem} // from backend
                                 />
                               </div>
                             )}

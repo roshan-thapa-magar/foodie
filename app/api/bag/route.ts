@@ -16,16 +16,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate total topping price
-    let totalToppings = 0;
-    if (toppings && Array.isArray(toppings)) {
-      totalToppings = toppings.reduce((sum: number, topping: any) => {
-        return sum + (topping.totalSelectedToppingPrice || 0);
-      }, 0);
-    }
+    // --- Calculate totalSelectedToppingPrice for each topping ---
+    const processedToppings = (toppings || []).map((topping: any) => {
+      let totalSelectedToppingPrice = 0;
 
-    const totalAmount = (price * (qty || 1) )+ totalToppings;
+      if (topping.selectionType === "single") {
+        const selectedItem = topping.items?.find((i: any) => i.title === topping.selectedItem);
+        totalSelectedToppingPrice = selectedItem?.price || 0;
+      } else if (topping.selectionType === "multiple") {
+        totalSelectedToppingPrice = (topping.items || []).reduce(
+          (sum: number, i: any) => sum + (i.price || 0),
+          0
+        );
+      }
 
+      return {
+        ...topping,
+        totalSelectedToppingPrice,
+      };
+    });
+
+    // --- Calculate total amount ---
+    const totalToppingsPrice = processedToppings.reduce(
+      (sum: number, t: any) => sum + (t.totalSelectedToppingPrice || 0),
+      0
+    );
+    const totalAmount = price * (qty || 1) + totalToppingsPrice;
+
+    // --- Store in MongoDB ---
     const newBag = await BagItem.create({
       userId,
       itemId: itemId || null,
@@ -34,7 +52,7 @@ export async function POST(request: NextRequest) {
       qty: qty || 1,
       image: image || "",
       note: note || "",
-      toppings: toppings || [],
+      toppings: processedToppings,
       totalAmount,
     });
 

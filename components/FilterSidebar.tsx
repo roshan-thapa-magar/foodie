@@ -121,7 +121,7 @@ export default function FilterSidebar({
             <span className="text-lg font-bold">FILTER</span>
 
             <button
-              className="text-sm text-muted-foreground hover:underline"
+              className="text-sm text-muted-foreground hover:underline cursor-pointer"
               onClick={handleClear}
             >
               Clear
@@ -229,7 +229,7 @@ export default function FilterSidebar({
 
             <button
               onClick={handleClear}
-              className="mt-4 w-full border rounded-md py-2 text-sm hover:bg-muted"
+              className="mt-4 w-full border rounded-md py-2 text-sm hover:bg-muted cursor-pointer"
             >
               Clear Filters
             </button>

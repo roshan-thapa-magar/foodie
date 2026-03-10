@@ -1,35 +1,49 @@
-"use client"
+'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Slider } from "@/components/ui/slider"
 
 interface SpicyLevelProps {
-  title: string            // The title of the topping section, e.g., "Drink Selection"
-  items: { title: string; price: number; _id?: string }[] // options
+  title: string
+  items: { title: string; price: number }[]
+  selectedItem?: string // for initial selection
+  value?: number        // optional controlled value
+  onChange?: (index: number) => void // callback for changes
 }
 
-export default function SpicyLevel({ title, items }: SpicyLevelProps) {
-  const [value, setValue] = useState([0]) // start at first item
+export default function SpicyLevel({
+  title,
+  items,
+  selectedItem,
+  value,
+  onChange,
+}: SpicyLevelProps) {
+  // Determine initial index: selectedItem or 0
+  const initialIndex = selectedItem ? items.findIndex(i => i.title === selectedItem) : 0
+  const [internalValue, setInternalValue] = useState(Math.max(initialIndex, 0))
 
-  // Get the current selected item's title
-  const currentItem = items[value[0]]?.title || "None"
+  // Update internal value if controlled value changes
+  useEffect(() => {
+    if (typeof value === "number") setInternalValue(value)
+  }, [value])
+
+  const handleChange = (index: number) => {
+      setInternalValue(index)
+      onChange?.(index)
+  }
+
+  const currentItem = items[internalValue]?.title || "None"
 
   return (
     <div className="w-full max-w-md">
-
-      {/* Title */}
       <h2 className="text-xl font-semibold mt-4">{title}</h2>
 
-      {/* Current Selection */}
-      <div className="text-center text-2xl font-bold text-purple-600">
-        {currentItem}
-      </div>
+      <div className="text-center text-2xl font-bold text-purple-600">{currentItem}</div>
 
-      {/* Slider */}
       <div className="relative pt-6">
         <Slider
-          value={value}
-          onValueChange={setValue}
+          value={[internalValue]}
+          onValueChange={(val) => handleChange(val[0])}
           min={0}
           max={Math.max(0, items.length - 1)}
           step={1}
@@ -39,6 +53,18 @@ export default function SpicyLevel({ title, items }: SpicyLevelProps) {
             [&_[role=slider]]:border-red-600
           "
         />
+      </div>
+
+      {/* Show all items with check */}
+      <div className="flex justify-between mt-2">
+        {items.map((item, index) => (
+          <div key={index} className="flex flex-col items-center">
+            <span className={internalValue === index ? "font-bold text-green-600" : ""}>
+              {item.title}
+            </span>
+            {internalValue === index && <span className="text-green-600">✓</span>}
+          </div>
+        ))}
       </div>
     </div>
   )
