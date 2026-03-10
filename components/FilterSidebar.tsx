@@ -21,16 +21,30 @@ interface FilterSidebarProps {
   maxPrice?: number | "";
   setMinPrice?: (val: number | "") => void;
   setMaxPrice?: (val: number | "") => void;
+  setSelectedCid?: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedCid?: string[];
 }
 
-/* -------------------- Reusable Category List -------------------- */
-function CategoryList({ prefix }: { prefix: string }) {
-  const [fetchedCategories, setFetchedCategories] = useState<{ _id: string; categoryName: string }[]>([]);
+/* ---------------- CATEGORY LIST ---------------- */
+
+function CategoryList({
+  prefix,
+  setSelectedCid,
+  selectedCid,
+}: {
+  prefix: string;
+  setSelectedCid?: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedCid?: string[];
+}) {
+  const [categories, setCategories] = useState<
+    { _id: string; categoryName: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
+
   const fetchCategory = async () => {
     try {
       const data = await getCategories();
-      setFetchedCategories(data);
+      setCategories(data || []);
     } catch (error) {
       console.error("Failed to fetch categories", error);
     } finally {
@@ -42,19 +56,32 @@ function CategoryList({ prefix }: { prefix: string }) {
     fetchCategory();
   }, []);
 
-  if (loading) return <div className="p-4 text-center">Loading categories...</div>;
+  if (loading) {
+    return <div className="p-4 text-center text-sm">Loading categories...</div>;
+  }
 
   return (
     <FieldGroup className="flex-1 overflow-y-auto space-y-3 hide-scrollbar !gap-2 !p-0">
-      {fetchedCategories.map((item, index) => {
-        const checkboxId = `${prefix}-category-${index}`;
+      {categories.map((item) => {
+        const checkboxId = `category-${item._id}`;
         return (
           <Field
-            key={checkboxId}
+            key={item._id}
             orientation="horizontal"
             className="flex items-center gap-2"
           >
-            <Checkbox id={checkboxId} name={checkboxId} />
+            <Checkbox
+              id={checkboxId}
+              checked={selectedCid?.includes(item._id) || false}
+              onCheckedChange={(checked) => {
+                const isChecked = checked === true;
+
+                setSelectedCid?.((prev = []) => {
+                  if (isChecked) return [...prev, item._id];
+                  return prev.filter((id) => id !== item._id);
+                });
+              }}
+            />
             <FieldLabel htmlFor={checkboxId}>
               {item.categoryName}
             </FieldLabel>
@@ -65,44 +92,76 @@ function CategoryList({ prefix }: { prefix: string }) {
   );
 }
 
-/* -------------------- Main Sidebar -------------------- */
-export default function FilterSidebar({ open, setOpen,minPrice,setMinPrice,maxPrice,setMaxPrice }: FilterSidebarProps) {
+/* ---------------- MAIN SIDEBAR ---------------- */
+
+export default function FilterSidebar({
+  open,
+  setOpen,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  setSelectedCid,
+  selectedCid,
+}: FilterSidebarProps) {
+  const handleClear = () => {
+    setSelectedCid?.([]);
+    setMinPrice?.("");
+    setMaxPrice?.("");
+  };
+
   return (
     <>
-      {/* ================= DESKTOP SIDEBAR ================= */}
+      {/* ---------------- DESKTOP SIDEBAR ---------------- */}
+
       <div className="hidden lg:block w-64 h-full">
         <div className="flex flex-col h-full">
 
-          {/* Header */}
           <div className="flex justify-between items-center mb-4">
             <span className="text-lg font-bold">FILTER</span>
+
             <button
               className="text-sm text-muted-foreground hover:underline"
-              onClick={() => setOpen(false)}
+              onClick={handleClear}
             >
               Clear
             </button>
           </div>
 
-          {/* Categories */}
-          <CategoryList prefix="desktop" />
+          <CategoryList
+            prefix="desktop"
+            setSelectedCid={setSelectedCid}
+            selectedCid={selectedCid}
+          />
 
-          {/* Price Filter */}
+          {/* PRICE FILTER */}
+
           <div className="border-t mt-4 pt-4">
             <span className="font-medium block mb-2">Prices (Rs.)</span>
+
             <div className="flex items-center gap-2">
               <Input
                 placeholder="Min"
                 type="number"
                 value={minPrice}
-                onChange={(e) => setMinPrice?.(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setMinPrice?.(
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
               />
+
               <span>:</span>
+
               <Input
                 placeholder="Max"
                 type="number"
                 value={maxPrice}
-                onChange={(e) => setMaxPrice?.(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setMaxPrice?.(
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
               />
             </div>
           </div>
@@ -110,45 +169,70 @@ export default function FilterSidebar({ open, setOpen,minPrice,setMinPrice,maxPr
         </div>
       </div>
 
-      {/* ================= MOBILE DRAWER ================= */}
+      {/* ---------------- MOBILE DRAWER ---------------- */}
+
       <Drawer open={open} onOpenChange={setOpen}>
         <DrawerContent className="h-[90vh] flex flex-col">
 
-          {/* Header */}
           <DrawerHeader className="border-b">
             <div className="flex justify-between items-center">
               <DrawerTitle>FILTERS</DrawerTitle>
+
               <DrawerClose asChild>
                 <button>
-                  <X />
+                  <X size={20} />
                 </button>
               </DrawerClose>
             </div>
           </DrawerHeader>
 
-          {/* Categories */}
-          <div className="p-4 overflow-y-auto">
-            <CategoryList prefix="mobile" />
+          <div className="flex-1 overflow-y-auto p-4">
+            <CategoryList
+              prefix="mobile"
+              setSelectedCid={setSelectedCid}
+              selectedCid={selectedCid}
+            />
           </div>
 
-          {/* Price Filter */}
+          {/* PRICE FILTER */}
+
           <div className="border-t p-4 bg-background">
             <span className="font-medium block mb-2">Prices (Rs.)</span>
+
             <div className="flex items-center gap-2">
               <Input
                 placeholder="Min"
                 type="number"
                 value={minPrice}
-                onChange={(e) => setMinPrice?.(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setMinPrice?.(
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
               />
+
               <span>:</span>
+
               <Input
                 placeholder="Max"
                 type="number"
                 value={maxPrice}
-                onChange={(e) => setMaxPrice?.(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setMaxPrice?.(
+                    e.target.value ? Number(e.target.value) : ""
+                  )
+                }
               />
             </div>
+
+            {/* CLEAR BUTTON */}
+
+            <button
+              onClick={handleClear}
+              className="mt-4 w-full border rounded-md py-2 text-sm hover:bg-muted"
+            >
+              Clear Filters
+            </button>
           </div>
 
         </DrawerContent>

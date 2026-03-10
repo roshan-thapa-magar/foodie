@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { connectMongoDB } from "@/lib/mongodb";
 import Items from "@/models/items";
 import cloudinary from "@/lib/cloudinary";
+import Category from "@/models/categories";
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,6 +91,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get("sort");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
+    const cidParam = searchParams.get("cid"); // multiple category IDs
 
     let query: any = {};
 
@@ -103,11 +105,24 @@ export async function GET(request: NextRequest) {
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
+    // Category filter (multiple cids)
+    if (cidParam) {
+      const cids = cidParam.split(","); // array of category IDs
+      console.log(cids)
+
+      // Find category names from Category model
+      const categories = await Category.find({ _id: { $in: cids } }).select("categoryName");
+      const categoryNames = categories.map((cat) => cat.categoryName); // use categoryName field
+      console.log(categoryNames)
+      // Filter items whose category is in the list
+      query.category = { $in: categoryNames };
+    }
+
     // Sort option
     let sortOption: any = {};
     if (sort === "price_low") sortOption = { price: 1 };
     else if (sort === "price_high") sortOption = { price: -1 };
-    else if (sort === "popular") sortOption = { ordersCount: -1 }; // ensure schema has this
+    else if (sort === "popular") sortOption = { ordersCount: -1 }; // make sure schema has ordersCount
 
     const items = await Items.find(query).sort(sortOption);
 
