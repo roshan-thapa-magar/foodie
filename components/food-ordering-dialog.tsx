@@ -168,52 +168,67 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
   };
 
   // Add to cart
-  const handleAddToCart = async () => {
-    if (!user) {
-      toast.error("Please log in");
-      return;
-    }
-    
-    setLoading(true);
+const handleAddToCart = async () => {
+  if (!user) {
+    toast.error("Please log in");
+    return;
+  }
+  
+  setLoading(true);
 
-    const toppingsPayload =
-      item.toppings?.map((topping) => {
-        if (topping.selectionType === "multiple") {
-          const selectedItems = Array.from(multipleToppings[topping.toppingTitle] || []).map((title) => {
-            const itemObj = topping.items?.find((i) => i.title === title);
-            return { title: itemObj?.title || title, price: itemObj?.price || 0 };
-          });
-          return { toppingTitle: topping.toppingTitle, selectionType: "multiple", items: selectedItems };
-        } else {
-          const index = singleToppings[topping.toppingTitle] || 0;
+  const toppingsPayload =
+    item.toppings?.map((topping) => {
+      if (topping.selectionType === "multiple") {
+        const selectedItems = Array.from(multipleToppings[topping.toppingTitle] || []).map((title) => {
+          const itemObj = topping.items?.find((i) => i.title === title);
+          return { title: itemObj?.title || title, price: itemObj?.price || 0 };
+        });
+        
+        // Only return if there are selected items OR if the topping group is required
+        if (selectedItems.length > 0 || topping.required) {
+          return { 
+            toppingTitle: topping.toppingTitle, 
+            selectionType: "multiple", 
+            items: selectedItems 
+          };
+        }
+        return null; // Skip this topping group if no items selected and not required
+      } else {
+        const index = singleToppings[topping.toppingTitle] || 0;
+        const selectedItem = topping.items?.[index];
+        
+        // For single selection, check if an item is actually selected (index > 0) OR if required
+        if (index > 0 || topping.required) {
           return {
             toppingTitle: topping.toppingTitle,
             selectionType: "single",
-            selectedItem: topping.items?.[index]?.title || "",
+            selectedItem: selectedItem?.title || "",
             items: topping.items,
           };
         }
-      }) || [];
+        return null; // Skip if no item selected and not required
+      }
+    }).filter(Boolean) || []; // Remove all null entries
 
-    const payload = {
-      userId: user._id,
-      itemId: item._id,
-      itemName: item.itemName,
-      price: item.price,
-      qty: quantity,
-      image: item.image,
-      note,
-      toppings: toppingsPayload,
-      createdAt: new Date().toISOString(),
-    };
-
-    const success = await addToBag(payload);
-    if (success) {
-      setIsOpen(false);
-      resetForm();
-    }
-    setLoading(false);
+  const payload = {
+    userId: user._id,
+    itemId: item._id,
+    itemName: item.itemName,
+    price: item.price,
+    qty: quantity,
+    image: item.image,
+    note,
+    toppings: toppingsPayload,
+    createdAt: new Date().toISOString(),
   };
+
+  const success = await addToBag(payload);
+  if (success) {
+    setIsOpen(false);
+    resetForm();
+  }
+  setLoading(false);
+};
 
   // Media query hook
   const useMediaQuery = (query: string) => {

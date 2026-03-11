@@ -75,24 +75,24 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
+    const type = searchParams.get("type") || "bag"; // default to bag
 
     if (!userId) {
       return NextResponse.json(
-        { message: "UserId is required" },
+        { success: false, message: "UserId is required" },
         { status: 400 }
       );
     }
 
-    const bagItems = await BagItem.find({ userId }).sort({ createdAt: -1 });
+    const items = await BagItem.find({ userId, type }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,
-      items: bagItems,
+      items,
     });
-
   } catch (error) {
     return NextResponse.json(
-      { success: false, message: "Failed to fetch bag items" },
+      { success: false, message: "Failed to fetch items", error: String(error) },
       { status: 500 }
     );
   }

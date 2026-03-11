@@ -13,7 +13,8 @@ import Image from "next/image";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import { useBag } from "@/context/BagContext";
-import SpicyLevel from "../form/SpicyLevel"; // Import the actual SpicyLevel component
+import SpicyLevel from "../form/SpicyLevel";
+import EditNoteDialog from "@/components/bag/EditNoteDialog";
 
 const Bag = () => {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
@@ -21,7 +22,9 @@ const Bag = () => {
   const [deletingToppingId, setDeletingToppingId] = useState<string | null>(null);
   const [updatingQtyId, setUpdatingQtyId] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-
+  const [editingNoteItem, setEditingNoteItem] = useState<any>(null);
+  const [savingNote, setSavingNote] = useState(false);
+  
   const {
     bagItems,
     loading,
@@ -31,7 +34,17 @@ const Bag = () => {
     removeItem,
     removeToppingItem,
     removeToppingGroup,
+    updateItemNote
   } = useBag();
+
+  const handleSaveNote = async (note: string) => {
+    if (!editingNoteItem) return;
+
+    setSavingNote(true);
+    await updateItemNote(editingNoteItem._id, note);
+    setSavingNote(false);
+    setEditingNoteItem(null);
+  };
 
   const toggleCustomization = (itemId: string) => {
     setExpandedItems(prev => ({
@@ -91,8 +104,8 @@ const Bag = () => {
           <div className="flex-1 flex flex-col justify-center items-center p-4">
             <ShoppingCart className="h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-sm text-muted-foreground text-center">Your bag is empty.</p>
-            <Button 
-              className="mt-4" 
+            <Button
+              className="mt-4"
               variant="outline"
               onClick={() => setIsOpen(false)}
             >
@@ -116,7 +129,7 @@ const Bag = () => {
                 {bagItems.map((item) => (
                   <div key={item._id} className="border-b pb-4 mb-4 last:border-0">
                     <div className="flex gap-3">
-                      <div className="w-20 h-20 flex-shrink-0">
+                      <div className="w-22 h-22 flex-shrink-0">
                         <Image
                           src={item.image}
                           alt={item.itemName}
@@ -145,11 +158,20 @@ const Bag = () => {
                           </button>
                         </div>
 
-                        {item.note && (
-                          <p className="text-xs text-muted-foreground mt-1 italic">
-                            Note: {item.note}
-                          </p>
-                        )}
+                        <button
+                          onClick={() => setEditingNoteItem(item)}
+                          className="text-xs text-left text-muted-foreground mt-1 italic hover:underline truncate-text cursor-pointer"
+                        >
+                          {item.note ? `Note: ${item.note}` : "+ Add note"}
+                        </button>
+
+                        <EditNoteDialog
+                          open={!!editingNoteItem && editingNoteItem._id === item._id}
+                          note={editingNoteItem?.note}
+                          loading={savingNote}
+                          onClose={() => setEditingNoteItem(null)}
+                          onSave={handleSaveNote}
+                        />
 
                         <div className="flex items-center justify-between mt-2">
                           <div className="flex items-center border rounded-full">
@@ -166,7 +188,7 @@ const Bag = () => {
                                 <Minus className="w-3 h-3" />
                               )}
                             </Button>
-                            
+
                             <span className="w-8 text-center text-sm">
                               {item.qty}
                             </span>
@@ -295,13 +317,13 @@ const Bag = () => {
                   <span className="font-medium">Calculated at checkout</span>
                 </div>
               </div>
-              
+
               <Button className="w-full" size="lg">
                 Proceed to Checkout
               </Button>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 className="w-full"
                 onClick={() => setIsOpen(false)}
               >

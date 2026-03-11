@@ -152,3 +152,53 @@ export async function PUT(
 }
 
 
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<Params> }
+) {
+  try {
+    const { id } = await context.params;
+    const bagId = id[0];
+
+    await connectMongoDB();
+
+    const bagItem = await BagItem.findById(bagId);
+
+    if (!bagItem) {
+      return NextResponse.json(
+        { success: false, message: "BagItem not found" },
+        { status: 404 }
+      );
+    }
+
+    const body = await request.json();
+    const { note } = body;
+
+    bagItem.note = note || "";
+
+    await bagItem.save();
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Note updated successfully",
+        data: bagItem,
+      },
+      { status: 200 }
+    );
+
+  } catch (error: unknown) {
+    console.error(error);
+
+    const errMsg = error instanceof Error ? error.message : "Unknown error";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update note",
+        error: errMsg,
+      },
+      { status: 500 }
+    );
+  }
+}

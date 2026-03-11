@@ -1,6 +1,6 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
-// Schema for individual topping item
+// ------------------ Topping Item Schema ------------------
 const toppingItemSchema = new Schema({
   title: {
     type: String,
@@ -12,7 +12,7 @@ const toppingItemSchema = new Schema({
   },
 });
 
-// Schema for a topping group
+// ------------------ Topping Group Schema ------------------
 const toppingSchema = new Schema({
   toppingTitle: {
     type: String,
@@ -23,28 +23,38 @@ const toppingSchema = new Schema({
     enum: ["single", "multiple"],
     default: "single",
   },
-  selectedItem:{
-    type: String,
+  selectedItem: {
+    type: String, // stores selected single topping title
+    default: "",
   },
   totalSelectedToppingPrice: {
     type: Number,
     default: 0,
   },
-  items: [toppingItemSchema],
+  items: {
+    type: [toppingItemSchema],
+    default: [],
+  },
 });
 
-// Main bag item schema
+// ------------------ Bag Item Schema ------------------
 const bagItemSchema = new Schema({
   userId: {
-    type: String, // or ObjectId if you have a User collection
+    type: String, // can be ObjectId if you reference a User collection
     required: true,
   },
   itemId: {
-    type: String, // for QR table orders
+    type: String, // optional if ordering from table QR
     required: false,
   },
   itemName: {
     type: String,
+    required: true,
+  },
+  type: {
+    type: String,
+    enum: ["bag", "order", "report"],
+    default: "bag",
     required: true,
   },
   price: {
@@ -67,14 +77,17 @@ const bagItemSchema = new Schema({
     type: String,
     default: "",
   },
-  toppings: [toppingSchema],
+  toppings: {
+    type: [toppingSchema],
+    default: [],
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
 });
 
-// Create the model
+// ------------------ Create Model ------------------
 const BagItem = models.BagItem || model("BagItem", bagItemSchema);
 
 export default BagItem;
