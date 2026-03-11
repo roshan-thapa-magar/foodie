@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode, useMemo, memo } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -10,8 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Slider } from "@/components/ui/slider";
 import { useUser } from "@/context/UserContext";
-import { bagService } from "@/services/bagService";
 import { toast } from "sonner";
+import { Textarea } from "./ui/textarea";
 
 interface ToppingItem {
   title: string;
@@ -37,18 +37,75 @@ interface Item {
 
 interface FoodOrderingDialogProps {
   item: Item;
-  children: ReactNode;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) {
+// Memoized NoteInput component to prevent re-renders
+const NoteInput = memo(({ note, setNote }: { note: string; setNote: (value: string) => void }) => {
+  return (
+    <div className="mt-4">
+      <label className="block text-sm font-semibold mb-1">Add Note (optional)</label>
+      <Textarea
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="Add extra instructions..."
+        className="w-full border rounded-md p-2 resize-none"
+      />
+    </div>
+  );
+});
+
+NoteInput.displayName = "NoteInput";
+
+// Memoized SpicyLevel component
+const SpicyLevel = memo(({ 
+  title, 
+  items, 
+  value, 
+  onChange 
+}: { 
+  title: string; 
+  items: ToppingItem[]; 
+  value: number; 
+  onChange: (index: number) => void;
+}) => {
+  const currentItem = items[value]?.title || "None";
+  return (
+    <div className="w-full max-w-md">
+      <h2 className="text-xl font-semibold mt-4">{title}</h2>
+      <div className="text-center text-2xl font-bold text-purple-600">{currentItem}</div>
+      <div className="relative pt-6">
+        <Slider
+          value={[value]}
+          onValueChange={(val) => onChange(val[0])}
+          min={0}
+          max={Math.max(0, items.length - 1)}
+          step={1}
+          className="[&>span:first-child]:bg-red-500 [&_[role=slider]]:bg-red-600 [&_[role=slider]]:border-red-600"
+        />
+      </div>
+    </div>
+  );
+});
+
+SpicyLevel.displayName = "SpicyLevel";
+
+export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodOrderingDialogProps) {
   const { user } = useUser();
 
+  const [internalOpen, setInternalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [note, setNote] = useState("");
   const [multipleToppings, setMultipleToppings] = useState<Record<string, Set<string>>>({});
   const [singleToppings, setSingleToppings] = useState<Record<string, number>>({});
-  const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [openNote, setOpenNote] = useState(false);
+
+  const isOpen = open ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
+
   // Initialize single toppings
   useEffect(() => {
     const initialSingle: Record<string, number> = {};
@@ -76,7 +133,7 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
   // Add to cart
   const handleAddToCart = async () => {
     if (!user) return alert("Please log in");
-    setLoading(true); // ✅ start loading
+    setLoading(true);
 
     const toppingsPayload =
       item.toppings?.map((topping) => {
@@ -117,8 +174,7 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
       });
       if (!res.ok) throw new Error("Failed to add to bag");
       toast("Added to bag successfully!");
-      setOpen(false);
-
+      setIsOpen(false);
     } catch (err) {
       console.error(err);
       toast("Something went wrong!");
@@ -142,147 +198,135 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
 
   const isMobile = useMediaQuery("(max-width: 600px)");
 
-  // SpicyLevel Slider Component
-  const SpicyLevel = ({
-    title,
-    items,
-    value,
-    onChange,
-  }: {
-    title: string;
-    items: ToppingItem[];
-    value: number;
-    onChange: (index: number) => void;
-  }) => {
-    const currentItem = items[value]?.title || "None";
+  // Memoized Content component to prevent unnecessary re-renders
+  const Content = useMemo(() => {
     return (
-      <div className="w-full max-w-md">
-        <h2 className="text-xl font-semibold mt-4">{title}</h2>
-        <div className="text-center text-2xl font-bold text-purple-600">{currentItem}</div>
-        <div className="relative pt-6">
-          <Slider
-            value={[value]}
-            onValueChange={(val) => onChange(val[0])}
-            min={0}
-            max={Math.max(0, items.length - 1)}
-            step={1}
-            className="[&>span:first-child]:bg-red-500 [&_[role=slider]]:bg-red-600 [&_[role=slider]]:border-red-600"
+      <div className="flex flex-col h-full">
+        <div className="p-4 md:p-0 space-y-2 md:mb-4 hide-scrollbar overflow-y-auto max-h-[calc(100vh-200px)]">
+          <Image
+            src={item.image}
+            alt={item.itemName}
+            height={100}
+            width={100}
+            className="w-full h-[30vh] object-cover rounded-lg"
           />
+          <p className="font-medium">{item.description}</p>
+          <div className="flex justify-between items-center">
+            <p className="text-xl font-extrabold">Rs. {item.price}</p>
+            <span 
+              className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors" 
+              onClick={() => setOpenNote((prev) => !prev)}
+            >
+              <Plus className="w-5 h-5" />
+            </span>
+          </div>
+          
+          {/* Use memoized NoteInput component */}
+          {openNote && <NoteInput note={note} setNote={setNote} />}
+          
+          <div className="space-y-4">
+            {item.toppings?.map((topping) =>
+              topping.selectionType === "multiple" ? (
+                <div key={topping.toppingTitle} className="space-y-4">
+                  <h1 className="text-lg font-extrabold">{topping.toppingTitle}</h1>
+                  <FieldGroup className="space-y-4 !gap-0">
+                    {topping.items?.map((toppingItem, index) => {
+                      const checkboxId = `${topping.toppingTitle}-${index}`;
+                      const checked = multipleToppings[topping.toppingTitle]?.has(toppingItem.title) || false;
+                      return (
+                        <Field key={checkboxId} orientation="horizontal" className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id={checkboxId}
+                              checked={checked}
+                              onCheckedChange={(val) =>
+                                handleCheckboxChange(topping.toppingTitle, toppingItem.title, val as boolean)
+                              }
+                            />
+                            <FieldLabel htmlFor={checkboxId}>{toppingItem.title}</FieldLabel>
+                          </div>
+                          <span>Rs. {toppingItem.price}</span>
+                        </Field>
+                      );
+                    })}
+                  </FieldGroup>
+                </div>
+              ) : (
+                <SpicyLevel
+                  key={topping.toppingTitle}
+                  title={topping.toppingTitle}
+                  items={topping.items || []}
+                  value={singleToppings[topping.toppingTitle] || 0}
+                  onChange={(index) => handleSliderChange(topping.toppingTitle, index)}
+                />
+              )
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between space-x-4 p-4 md:p-0 md:pt-4 border-t bg-background sticky bottom-0 z-50">
+          <div className="flex items-center space-x-4 rounded-full">
+            <button
+              type="button"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 hover:bg-primary/90 text-primary-foreground"
+              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="text-lg font-semibold min-w-[24px] text-center text-foreground">{quantity}</span>
+            <button
+              type="button"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 hover:bg-primary/90 text-primary-foreground"
+              onClick={() => setQuantity((q) => q + 1)}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <Button
+            className="flex-1 py-2 flex items-center justify-center gap-2"
+            onClick={handleAddToCart}
+            disabled={loading}
+          >
+            {loading && <Loader2 className="animate-spin w-5 h-5" />}
+            {loading ? "Adding..." : "Add to Cart"}
+          </Button>
         </div>
       </div>
     );
-  };
-
-  // Main content
-  const Content = () => (
-    <div className="flex flex-col h-full">
-      <div className="overflow-y-auto flex-1 p-4 md:p-0 space-y-2 md:mb-4 hide-scrollbar">
-        <Image
-          src={item.image}
-          alt={item.itemName}
-          height={100}
-          width={100}
-          className="w-full h-[30vh] object-cover rounded-lg"
-        />
-        <p className="font-medium">{item.description}</p>
-        <p className="text-xl font-extrabold">Rs. {item.price}</p>
-
-        <div className="space-y-4">
-          {item.toppings?.map((topping) =>
-            topping.selectionType === "multiple" ? (
-              <div key={topping.toppingTitle} className="space-y-4">
-                <h1 className="text-lg font-extrabold">{topping.toppingTitle}</h1>
-                <FieldGroup className="space-y-4 !gap-0">
-                  {topping.items?.map((toppingItem, index) => {
-                    const checkboxId = `${topping.toppingTitle}-${index}`;
-                    const checked = multipleToppings[topping.toppingTitle]?.has(toppingItem.title) || false;
-                    return (
-                      <Field key={checkboxId} orientation="horizontal" className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={checkboxId}
-                            checked={checked}
-                            onCheckedChange={(val) =>
-                              handleCheckboxChange(topping.toppingTitle, toppingItem.title, val as boolean)
-                            }
-                          />
-                          <FieldLabel htmlFor={checkboxId}>{toppingItem.title}</FieldLabel>
-                        </div>
-                        <span>Rs. {toppingItem.price}</span>
-                      </Field>
-                    );
-                  })}
-                </FieldGroup>
-              </div>
-            ) : (
-              <SpicyLevel
-                key={topping.toppingTitle}
-                title={topping.toppingTitle}
-                items={topping.items || []}
-                value={singleToppings[topping.toppingTitle] || 0}
-                onChange={(index) => handleSliderChange(topping.toppingTitle, index)}
-              />
-            )
-          )}
-        </div>
-
-        <div className="mt-4">
-          <label className="block text-sm font-semibold mb-1">Add Note (optional)</label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Add extra instructions..."
-            className="w-full border rounded-md p-2 resize-none"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between space-x-4 p-4 md:p-0 md:pt-4 border-t bg-background sticky bottom-0 z-50">
-        <div className="flex items-center space-x-4 rounded-full">
-          <button
-            type="button"
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 hover:bg-primary/90 text-primary-foreground"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-          >
-            <Minus />
-          </button>
-          <span className="text-lg font-semibold min-w-[24px] text-center text-foreground">{quantity}</span>
-          <button
-            type="button"
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/80 hover:bg-primary/90 text-primary-foreground"
-            onClick={() => setQuantity((q) => q + 1)}
-          >
-            <Plus />
-          </button>
-        </div>
-        <Button
-          className="flex-1 py-2 flex items-center justify-center gap-2"
-          onClick={handleAddToCart}
-          disabled={loading} // disable while loading
-        >
-          {loading && <Loader2 className="animate-spin w-5 h-5" />}
-          {loading ? "Adding..." : "Add to Cart"}
-        </Button>
-      </div>
-    </div>
-  );
+  }, [
+    item, 
+    quantity, 
+    multipleToppings, 
+    singleToppings, 
+    openNote, 
+    note, 
+    loading,
+    handleCheckboxChange,
+    handleSliderChange,
+    handleAddToCart
+  ]);
 
   // Mobile Drawer vs Desktop Dialog
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={setOpen}>
+      <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>{children}</DrawerTrigger>
-        <DrawerContent className="h-auto z-[1100]">
+        <DrawerContent 
+          className="h-auto z-[1100]" 
+          onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
+        >
           <DrawerHeader>
             <div className="flex justify-between items-center">
               <DrawerTitle>{item.itemName}</DrawerTitle>
               <DrawerClose asChild>
-                <X />
+                <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
               </DrawerClose>
             </div>
           </DrawerHeader>
           <div className="overflow-y-auto">
-            <Content />
+            {Content}
           </div>
         </DrawerContent>
       </Drawer>
@@ -290,14 +334,17 @@ export function FoodOrderingDialog({ item, children }: FoodOrderingDialogProps) 
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+      <DialogContent 
+        className="sm:max-w-md" 
+        onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
+      >
         <DialogHeader>
           <DialogTitle>{item.itemName}</DialogTitle>
         </DialogHeader>
         <div className="overflow-y-auto max-h-[60vh]">
-          <Content />
+          {Content}
         </div>
       </DialogContent>
     </Dialog>
