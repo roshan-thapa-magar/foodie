@@ -13,6 +13,7 @@ import {
 import { X } from "lucide-react";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { getCategories } from "@/services/category.api";
+import CategorySkeleton from "@/components/skeleton/CategorySkeleton"; // import it
 
 interface FilterSidebarProps {
   open: boolean;
@@ -57,7 +58,7 @@ function CategoryList({
   }, []);
 
   if (loading) {
-    return <div className="p-4 text-center text-sm">Loading categories...</div>;
+    return <CategorySkeleton count={13} />; // show 6 skeleton rows
   }
 
   return (

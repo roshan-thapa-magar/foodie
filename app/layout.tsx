@@ -6,6 +6,7 @@ import { AuthModalProvider } from "@/context/auth-modal-context"
 import { NextAuthProvider } from "./Providers";
 import { UserProvider } from "@/context/UserContext";
 import { Toaster } from "@/components/ui/sonner"
+import { BagProvider } from "@/context/BagContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,19 +34,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextAuthProvider>
-        <AuthModalProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <UserProvider>
-            {children}
-            <Toaster />
-            </UserProvider>
-          </ThemeProvider>
-        </AuthModalProvider>
+          <AuthModalProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <UserProvider>
+                <BagProvider>
+                  {children}
+                  <Toaster />
+                </BagProvider>
+              </UserProvider>
+            </ThemeProvider>
+          </AuthModalProvider>
         </NextAuthProvider>
       </body>
     </html>

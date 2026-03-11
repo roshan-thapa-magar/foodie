@@ -50,7 +50,7 @@ const MobileMenu = () => {
         {/* Header (Required for accessibility) */}
         <SheetHeader>
           <SheetTitle className="text-3xl font-extrabold">
-            NOVA
+           KYIRMU
           </SheetTitle>
         </SheetHeader>
 

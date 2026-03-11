@@ -6,8 +6,12 @@ import { Search } from "lucide-react"
 import Image from "next/image"
 import { FoodOrderingDialog } from "@/components/food-ordering-dialog"
 import { getItems } from "@/services/items.api"
+import { useSession } from "next-auth/react"
+import { useAuthModal } from "@/context/auth-modal-context"
 
 const SearchBar = () => {
+  const { status } = useSession()
+  const { openModal } = useAuthModal()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [items, setItems] = useState<any[]>([])
   const [search, setSearch] = useState("")
@@ -39,8 +43,14 @@ const SearchBar = () => {
     item.itemName?.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Open dialog and close search dropdown
+  // Open dialog with authentication check
   const openDialog = (item: any) => {
+    // Check authentication first
+    if (status !== "authenticated") {
+      openModal()
+      return
+    }
+    
     setSelectedItem(item)
     setSearch("")      // close dropdown
     setMobileOpen(false) // close mobile search if open
@@ -152,12 +162,14 @@ const SearchBar = () => {
         )}
       </div>
 
-      {/* Single FoodOrderingDialog */}
-      {selectedItem && (
+      {/* Single FoodOrderingDialog - only render when authenticated or when selectedItem exists */}
+      {selectedItem && status === "authenticated" && (
         <FoodOrderingDialog
           item={selectedItem}
           open={!!selectedItem}
-          onOpenChange={() => setSelectedItem(null)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedItem(null)
+          }}
         />
       )}
     </div>

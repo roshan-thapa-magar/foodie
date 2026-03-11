@@ -34,7 +34,7 @@ const Header = () => {
             onClick={() => router.push("/")}
             className="text-2xl md:text-3xl font-extrabold m-0 cursor-pointer"
           >
-            NOVA
+            KYIRMU
           </h1>
         </div>
 

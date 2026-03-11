@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Header />
         <ScrollingMessages
           messages={[
-            "Restaurant is closed. Nova Delivers will reopen at 5:00 pm",
+            "Restaurant is closed. KYIRMU Delivers will reopen at 5:00 pm",
             "New menu available tomorrow!",
             "Free delivery on orders over $50",
           ]}

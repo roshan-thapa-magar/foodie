@@ -12,6 +12,9 @@ import { Slider } from "@/components/ui/slider";
 import { useUser } from "@/context/UserContext";
 import { toast } from "sonner";
 import { Textarea } from "./ui/textarea";
+import { useBag } from "@/context/BagContext";
+import { useSession } from "next-auth/react"
+import { useAuthModal } from "@/context/auth-modal-context"
 
 interface ToppingItem {
   title: string;
@@ -94,6 +97,9 @@ SpicyLevel.displayName = "SpicyLevel";
 
 export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodOrderingDialogProps) {
   const { user } = useUser();
+  const { addToBag } = useBag();
+  const { status } = useSession()
+  const { openModal } = useAuthModal()
 
   const [internalOpen, setInternalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -105,6 +111,24 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
 
   const isOpen = open ?? internalOpen;
   const setIsOpen = onOpenChange ?? setInternalOpen;
+
+  // Handle opening with auth check
+  const handleOpenChange = (newOpen: boolean) => {
+    if (newOpen && status !== "authenticated") {
+      openModal();
+      return;
+    }
+    setIsOpen(newOpen);
+  };
+
+  // Handle trigger click
+  const handleTriggerClick = (e: React.MouseEvent) => {
+    if (status !== "authenticated") {
+      e.preventDefault();
+      e.stopPropagation();
+      openModal();
+    }
+  };
 
   // Initialize single toppings
   useEffect(() => {
@@ -130,9 +154,26 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
     setSingleToppings((prev) => ({ ...prev, [group]: index }));
   };
 
+  // Reset form
+  const resetForm = () => {
+    setQuantity(1);
+    setNote("");
+    setMultipleToppings({});
+    const initialSingle: Record<string, number> = {};
+    item.toppings?.forEach((t) => {
+      if (t.selectionType === "single") initialSingle[t.toppingTitle] = 0;
+    });
+    setSingleToppings(initialSingle);
+    setOpenNote(false);
+  };
+
   // Add to cart
   const handleAddToCart = async () => {
-    if (!user) return alert("Please log in");
+    if (!user) {
+      toast.error("Please log in");
+      return;
+    }
+    
     setLoading(true);
 
     const toppingsPayload =
@@ -166,21 +207,12 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
       createdAt: new Date().toISOString(),
     };
 
-    try {
-      const res = await fetch("/api/bag", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error("Failed to add to bag");
-      toast("Added to bag successfully!");
+    const success = await addToBag(payload);
+    if (success) {
       setIsOpen(false);
-    } catch (err) {
-      console.error(err);
-      toast("Something went wrong!");
-    } finally {
-      setLoading(false);
+      resetForm();
     }
+    setLoading(false);
   };
 
   // Media query hook
@@ -309,8 +341,10 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
   // Mobile Drawer vs Desktop Dialog
   if (isMobile) {
     return (
-      <Drawer open={isOpen} onOpenChange={setIsOpen}>
-        <DrawerTrigger asChild>{children}</DrawerTrigger>
+      <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+        <DrawerTrigger asChild onClick={handleTriggerClick}>
+          {children}
+        </DrawerTrigger>
         <DrawerContent 
           className="h-auto z-[1100]" 
           onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
@@ -334,8 +368,10 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild onClick={handleTriggerClick}>
+        {children}
+      </DialogTrigger>
       <DialogContent 
         className="sm:max-w-md" 
         onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
