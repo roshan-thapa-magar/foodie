@@ -15,6 +15,7 @@ import { useState } from "react";
 import { useBag } from "@/context/BagContext";
 import SpicyLevel from "../form/SpicyLevel";
 import EditNoteDialog from "@/components/bag/EditNoteDialog";
+import CheckoutDialog from "@/components/bag/CheckoutDialog"; // adjust path if needed
 
 const Bag = () => {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
@@ -24,7 +25,8 @@ const Bag = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingNoteItem, setEditingNoteItem] = useState<any>(null);
   const [savingNote, setSavingNote] = useState(false);
-  
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
   const {
     bagItems,
     loading,
@@ -318,10 +320,17 @@ const Bag = () => {
                 </div>
               </div>
 
-              <Button className="w-full" size="lg">
+              <Button className="w-full" size="lg" onClick={() => setCheckoutOpen(true)}>
                 Proceed to Checkout
               </Button>
-
+              <CheckoutDialog
+                open={checkoutOpen}
+                onOpenChange={setCheckoutOpen}
+                onSubmit={(phone, paymentMethod) => {
+                  console.log("Phone:", phone, "Payment:", paymentMethod);
+                  // TODO: Call your API to save checkout info
+                }}
+              />
               <Button
                 variant="outline"
                 className="w-full"

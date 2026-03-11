@@ -51,12 +51,6 @@ const bagItemSchema = new Schema({
     type: String,
     required: true,
   },
-  type: {
-    type: String,
-    enum: ["bag", "order", "report"],
-    default: "bag",
-    required: true,
-  },
   price: {
     type: Number,
     required: true,
