@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");
-    const type = searchParams.get("type") || "bag"; // default to bag
 
     if (!userId) {
       return NextResponse.json(
@@ -84,7 +83,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const items = await BagItem.find({ userId, type }).sort({ createdAt: -1 });
+    // Fetch all bag items for the user
+    const items = await BagItem.find({ userId }).sort({ createdAt: -1 });
 
     return NextResponse.json({
       success: true,

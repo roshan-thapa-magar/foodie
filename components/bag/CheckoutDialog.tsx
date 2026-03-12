@@ -106,7 +106,7 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
   const paymentOptions = [
     { value: "cash", label: "Cash" },
     { value: "card", label: "Card" },
-    { value: "phonePay", label: "PhonePay" },
+    { value: "online", label: "online" },
   ];
 
   const FormContent = (

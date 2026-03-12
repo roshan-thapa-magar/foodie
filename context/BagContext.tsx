@@ -13,7 +13,6 @@ interface BagItem {
   totalAmount: number;
   toppings: any[];
   note?: string;
-  type?: string; // Add type field if it exists in your BagItem model
 }
 
 interface BagContextType {
@@ -21,14 +20,14 @@ interface BagContextType {
   loading: boolean;
   subtotal: number;
   itemCount: number;
-  fetchBag: (type?: string) => Promise<void>; // Update the type to accept optional type parameter
+  fetchBag: () => Promise<void>;
   addToBag: (payload: any) => Promise<boolean>;
+  addToOrder: (address: string, phone: string, paymentMethod: string) => Promise<boolean>;
   updateQuantity: (bagId: string, newQty: number) => Promise<void>;
   removeItem: (bagId: string) => Promise<void>;
   removeToppingItem: (bagId: string, toppingItemId: string) => Promise<void>;
   removeToppingGroup: (bagId: string, toppingGroupId: string) => Promise<void>;
-  updateItemNote: (bagId: string, note: string) => Promise<void>; // ADD THIS
-
+  updateItemNote: (bagId: string, note: string) => Promise<void>;
 }
 
 const BagContext = createContext<BagContextType | undefined>(undefined);
@@ -39,8 +38,7 @@ export function BagProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const userId = session?.user?._id;
 
-  // Update fetchBag to accept an optional type parameter
-  const fetchBag = async (type: string = "bag") => {
+  const fetchBag = async () => {
     if (!userId) {
       setBagItems([]);
       return;
@@ -48,8 +46,7 @@ export function BagProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true);
-      // Include type in the API call
-      const response = await fetch(`/api/bag?userId=${userId}&type=${type}`);
+      const response = await fetch(`/api/bag?userId=${userId}`);
       const data = await response.json();
       setBagItems(data.items || []);
     } catch (error) {
@@ -59,6 +56,42 @@ export function BagProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   };
+
+  const addToOrder = async (
+    address: string,
+    phone: string,
+    paymentMethod: string
+  ): Promise<boolean> => {
+    if (!userId) {
+      toast.error("Please log in");
+      return false;
+    }
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId,
+          address,
+          phone,
+          paymentMethod,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to place order");
+
+      toast.success("Order placed successfully!");
+      await fetchBag(); // optional, in case you want to refresh the bag
+
+      return true;
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong!");
+      return false;
+    }
+  };
+
 
   const addToBag = async (payload: any): Promise<boolean> => {
     if (!userId) {
@@ -76,8 +109,7 @@ export function BagProvider({ children }: { children: ReactNode }) {
       if (!res.ok) throw new Error("Failed to add to bag");
 
       toast.success("Added to bag successfully!");
-      // Pass the type from payload or default to "bag"
-      await fetchBag(payload.type || "bag");
+      await fetchBag();
       return true;
     } catch (err) {
       console.error(err);
@@ -98,10 +130,8 @@ export function BagProvider({ children }: { children: ReactNode }) {
 
       if (!res.ok) throw new Error();
 
-      toast.success("Quantity updated");
-      // You might want to maintain the current type when refreshing
-      // This assumes you have a way to know the current type
-      await fetchBag(); // This will use the default "bag" type
+      // toast.success("Quantity updated");
+      await fetchBag();
     } catch {
       toast.error("Failed to update quantity");
     }
@@ -109,14 +139,11 @@ export function BagProvider({ children }: { children: ReactNode }) {
 
   const removeItem = async (bagId: string) => {
     try {
-      const res = await fetch(`/api/bag/${bagId}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/bag/${bagId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
 
       toast.success("Item removed from bag");
-      await fetchBag(); // Refresh with default type
+      await fetchBag();
     } catch {
       toast.error("Failed to remove item");
     }
@@ -124,55 +151,43 @@ export function BagProvider({ children }: { children: ReactNode }) {
 
   const removeToppingItem = async (bagId: string, toppingItemId: string) => {
     try {
-      const res = await fetch(`/api/bag/${bagId}/item/${toppingItemId}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/bag/${bagId}/item/${toppingItemId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
 
       toast.success("Topping removed");
-      await fetchBag(); // Refresh with default type
+      await fetchBag();
     } catch {
       toast.error("Failed to remove topping");
     }
   };
 
-  const updateItemNote = async (bagId: string, note: string) => {
-    // update locally
-    setBagItems((prev) =>
-      prev.map((item) => (item._id === bagId ? { ...item, note } : item))
-    );
-
-    // optionally, update backend
-    await fetch(`/api/bag/${bagId}/note`, {
-      method: "PATCH",
-      body: JSON.stringify({ note }),
-      headers: { "Content-Type": "application/json" },
-    });
-  };
-
   const removeToppingGroup = async (bagId: string, toppingGroupId: string) => {
     try {
-      const res = await fetch(`/api/bag/${bagId}/group/${toppingGroupId}`, {
-        method: "DELETE",
-      });
-
+      const res = await fetch(`/api/bag/${bagId}/group/${toppingGroupId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
 
       toast.success("Topping group removed");
-      await fetchBag(); // Refresh with default type
+      await fetchBag();
     } catch {
       toast.error("Failed to remove topping group");
     }
   };
 
-  // Calculate subtotal and item count
+  const updateItemNote = async (bagId: string, note: string) => {
+    setBagItems((prev) => prev.map((item) => (item._id === bagId ? { ...item, note } : item)));
+
+    await fetch(`/api/bag/${bagId}/note`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ note }),
+    });
+  };
+
   const subtotal = bagItems.reduce((total, item) => total + item.totalAmount, 0);
   const itemCount = bagItems.length;
 
-  // Fetch bag when userId changes (with default type "bag")
   useEffect(() => {
-    fetchBag("bag"); // You can change this default value as needed
+    fetchBag();
   }, [userId]);
 
   return (
@@ -187,7 +202,8 @@ export function BagProvider({ children }: { children: ReactNode }) {
       removeItem,
       removeToppingItem,
       removeToppingGroup,
-      updateItemNote, 
+      updateItemNote,
+      addToOrder
     }}>
       {children}
     </BagContext.Provider>

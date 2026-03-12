@@ -36,8 +36,10 @@ const Bag = () => {
     removeItem,
     removeToppingItem,
     removeToppingGroup,
-    updateItemNote
+    updateItemNote,
+    addToOrder,
   } = useBag();
+
 
   const handleSaveNote = async (note: string) => {
     if (!editingNoteItem) return;
@@ -176,25 +178,29 @@ const Bag = () => {
                         />
 
                         <div className="flex items-center justify-between mt-2">
+                          {/* Quantity Controls */}
                           <div className="flex items-center border rounded-full">
+                            {/* Decrease Quantity */}
                             <Button
                               size="sm"
                               variant="ghost"
                               className="rounded-full w-8 h-8 p-0"
                               onClick={() => handleUpdateQuantity(item._id, item.qty - 1)}
-                              disabled={updatingQtyId === item._id}
+                              disabled={updatingQtyId === item._id || item.qty <= 1}
                             >
-                              {updatingQtyId === item._id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Minus className="w-3 h-3" />
-                              )}
+                              <Minus className="w-3 h-3" />
                             </Button>
 
-                            <span className="w-8 text-center text-sm">
-                              {item.qty}
+                            {/* Quantity Display */}
+                            <span className="w-8 text-center text-sm flex items-center justify-center">
+                              {updatingQtyId === item._id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                              ) : (
+                                <span>{item.qty}</span>
+                              )}
                             </span>
 
+                            {/* Increase Quantity */}
                             <Button
                               size="sm"
                               variant="ghost"
@@ -202,14 +208,11 @@ const Bag = () => {
                               onClick={() => handleUpdateQuantity(item._id, item.qty + 1)}
                               disabled={updatingQtyId === item._id}
                             >
-                              {updatingQtyId === item._id ? (
-                                <Loader2 className="w-3 h-3 animate-spin" />
-                              ) : (
-                                <Plus className="w-3 h-3" />
-                              )}
+                              <Plus className="w-3 h-3" />
                             </Button>
                           </div>
 
+                          {/* Total Amount */}
                           <span className="font-semibold text-sm">
                             Rs. {item.totalAmount}
                           </span>
@@ -326,9 +329,8 @@ const Bag = () => {
               <CheckoutDialog
                 open={checkoutOpen}
                 onOpenChange={setCheckoutOpen}
-                onSubmit={(phone, paymentMethod) => {
-                  console.log("Phone:", phone, "Payment:", paymentMethod);
-                  // TODO: Call your API to save checkout info
+                onSubmit={(phone, paymentMethod, address) => {
+                  addToOrder(address, phone, paymentMethod);
                 }}
               />
               <Button

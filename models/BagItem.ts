@@ -1,87 +1,52 @@
-import mongoose, { Schema, model, models } from "mongoose";
+import mongoose, { Schema, model, models, Document } from "mongoose";
 
 // ------------------ Topping Item Schema ------------------
 const toppingItemSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    default: 0,
-  },
+  title: { type: String, required: true },
+  price: { type: Number, default: 0 },
 });
 
 // ------------------ Topping Group Schema ------------------
 const toppingSchema = new Schema({
-  toppingTitle: {
-    type: String,
-    required: true,
-  },
-  selectionType: {
-    type: String,
-    enum: ["single", "multiple"],
-    default: "single",
-  },
-  selectedItem: {
-    type: String, // stores selected single topping title
-    default: "",
-  },
-  totalSelectedToppingPrice: {
-    type: Number,
-    default: 0,
-  },
-  items: {
-    type: [toppingItemSchema],
-    default: [],
-  },
+  toppingTitle: { type: String, required: true },
+  selectionType: { type: String, enum: ["single", "multiple"], default: "single" },
+  selectedItem: { type: String, default: "" }, // selected topping for single choice
+  totalSelectedToppingPrice: { type: Number, default: 0 },
+  items: { type: [toppingItemSchema], default: [] },
 });
+
+// ------------------ Bag Item Interface ------------------
+export interface IBagItem extends Document {
+  userId: string;
+  itemId?: string;
+  itemName: string;
+  price: number;
+  image?: string;
+  qty: number;
+  totalAmount: number;
+  note?: string;
+  toppings: typeof toppingSchema[];
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 // ------------------ Bag Item Schema ------------------
-const bagItemSchema = new Schema({
-  userId: {
-    type: String, // can be ObjectId if you reference a User collection
-    required: true,
+export const bagItemSchema = new Schema<IBagItem>(
+  {
+    userId: { type: String, required: true },
+    itemId: { type: String },
+    itemName: { type: String, required: true },
+    price: { type: Number, required: true },
+    image: { type: String, default: "" },
+    qty: { type: Number, default: 1 },
+    totalAmount: { type: Number, default: 0 },
+    note: { type: String, default: "" },
+    toppings: { type: [toppingSchema], default: [] },
   },
-  itemId: {
-    type: String, // optional if ordering from table QR
-    required: false,
-  },
-  itemName: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  image: {
-    type: String,
-    default: "",
-  },
-  qty: {
-    type: Number,
-    default: 1,
-  },
-  totalAmount: {
-    type: Number,
-    default: 0,
-  },
-  note: {
-    type: String,
-    default: "",
-  },
-  toppings: {
-    type: [toppingSchema],
-    default: [],
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
-// ------------------ Create Model ------------------
-const BagItem = models.BagItem || model("BagItem", bagItemSchema);
+// ------------------ Bag Item Model ------------------
+const BagItem = models.BagItem || model<IBagItem>("BagItem", bagItemSchema);
 
 export default BagItem;
