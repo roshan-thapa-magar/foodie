@@ -58,13 +58,13 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const mainItems = [
   { title: "Dashboard", url: "/owner", icon: Home },
   { title: "Cashier", url: "/owner/cashier", icon: CashRegister },
-  { title: "Kitchen", url: "/owner/kitchen", icon: ChefHat },
+  // { title: "Kitchen", url: "/owner/kitchen", icon: ChefHat },
 ];
 
 const inventoryItems = [
-  { title: "Cuisines", url: "/owner/inventory", icon: Folder },
+  // { title: "Cuisines", url: "/owner/inventory", icon: Folder },
   { title: "Categories", url: "/owner/inventory/categories", icon: Tags },
-  { title: "Units", url: "/owner/inventory/units", icon: Ruler },
+  // { title: "Units", url: "/owner/inventory/units", icon: Ruler },
   { title: "Stock", url: "/owner/inventory/stocks", icon: Boxes },
 ];
 
@@ -130,7 +130,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {filteredTableItems.length > 0 && (
+              {/* {filteredTableItems.length > 0 && (
                 <Collapsible className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -162,7 +162,7 @@ export function AppSidebar() {
                     </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
-              )}
+              )} */}
               {filteredInventoryItems.length > 0 && (
                 <Collapsible className="group/collapsible">
                   <SidebarMenuItem>
@@ -196,7 +196,7 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 </Collapsible>
               )}
-              {filteredStaffDetails.length > 0 && (
+              {/* {filteredStaffDetails.length > 0 && (
                 <Collapsible className="group/collapsible">
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
@@ -228,7 +228,7 @@ export function AppSidebar() {
                     </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
-              )}
+              )} */}
               {filteredReportItems.length > 0 && (
                 <Collapsible className="group/collapsible">
                   <SidebarMenuItem>

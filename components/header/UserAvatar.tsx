@@ -17,7 +17,7 @@ const UserAvatar = () => {
   const { user, fetchUser, loading } = useUser();
   const userId = session?.user?._id;
   useEffect(() => {
-   if (userId) {
+    if (userId) {
       fetchUser(userId); // fetch only if ID exists
     }
   }, [userId]);
@@ -34,6 +34,7 @@ const UserAvatar = () => {
 
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem onClick={() => router.push("/myAccount")}>View Profile</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/orderHistory")}>order History</DropdownMenuItem>
         <DropdownMenuItem className="text-red-500" onClick={() => signOut()}>
           Logout
         </DropdownMenuItem>

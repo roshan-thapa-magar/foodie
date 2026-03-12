@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
+import { Textarea } from "../ui/textarea";
 
 // Dynamic import for Map
 const AddressMap = dynamic(
@@ -40,13 +41,14 @@ const AddressMap = dynamic(
 interface CheckoutProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (phone: string, paymentMethod: string, address: string) => void;
+  onSubmit: (phone: string, paymentMethod: string, address: string,note:string) => void;
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => {
   const [phone, setPhone] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [address, setAddress] = useState("");
+  const [note, setNote] = useState(""); // <- note state
   const [isMobile, setIsMobile] = useState(false);
 
   // Detect mobile screens
@@ -66,11 +68,12 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
       toast.error("Please enter your address");
       return;
     }
-    onSubmit(phone, paymentMethod, address);
+    onSubmit(phone, paymentMethod, address,note);
     onOpenChange(false);
     setPhone("");
     setPaymentMethod("cash");
     setAddress("");
+    setNote("");
   };
 
   const handleUseCurrentLocation = () => {
@@ -137,7 +140,7 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
           </Button>
         </div>
 
-        
+
       </div>
       {/* Phone Number */}
       <div>
@@ -149,7 +152,15 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
           onChange={(e) => setPhone(e.target.value)}
         />
       </div>
-
+      <div>
+        <label className="text-sm">Note (optional)</label>
+        <Textarea
+          placeholder="Add a note for your order..."
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          rows={3}
+        />
+      </div>
       {/* Payment Method */}
       <div>
         <label className="text-sm mb-2 block">Payment Method</label>
@@ -166,7 +177,7 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
               </label>
             </div>
           ))}
-      
+
         </RadioGroup>
       </div>
 
@@ -197,8 +208,8 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
           <DialogTitle>Enter Checkout Info</DialogTitle>
         </DialogHeader>
         <div className="overflow-y-auto max-h-[60vh]">
-            {FormContent}
-          </div>
+          {FormContent}
+        </div>
         <DialogClose className="sr-only" />
       </DialogContent>
     </Dialog>

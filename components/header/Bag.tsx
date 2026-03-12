@@ -329,8 +329,8 @@ const Bag = () => {
               <CheckoutDialog
                 open={checkoutOpen}
                 onOpenChange={setCheckoutOpen}
-                onSubmit={(phone, paymentMethod, address) => {
-                  addToOrder(address, phone, paymentMethod);
+                onSubmit={(phone, paymentMethod, address,note) => {
+                  addToOrder(address, phone, paymentMethod,note);
                 }}
               />
               <Button

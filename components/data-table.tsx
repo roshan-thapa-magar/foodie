@@ -51,6 +51,8 @@ interface DataTableProps<T extends Record<string, any>> {
   addLabel: string;
   onAddClick: () => void;
   searchKey: keyof T;
+  loading?: boolean; // <- add this
+
 }
 
 export default function DataTable<T extends Record<string, any>>({
@@ -195,43 +197,43 @@ export default function DataTable<T extends Record<string, any>>({
               </TableRow>
             </TableHeader>
             <TableBody>
-  {paginatedData.length === 0 ? (
-    <TableRow>
-      <TableCell colSpan={columns.filter(col => columnVisibility[col.id]).length + 2} className="text-center py-4">
-        No category found
-      </TableCell>
-    </TableRow>
-  ) : (
-    paginatedData.map((item, index) => {
-      const rowIndex = startIndex + index;
-      return (
-        <TableRow key={rowIndex}>
-          <TableCell>
-            <Checkbox
-              checked={selectedRows.has(rowIndex)}
-              onCheckedChange={(checked) =>
-                handleSelectRow(rowIndex, checked as boolean)
-              }
-              aria-label={`Select row ${rowIndex + 1}`}
-              className="translate-y-[2px]"
-            />
-          </TableCell>
-          <TableCell className="text-center">{rowIndex + 1}</TableCell>
-          {columns
-            .filter((col) => columnVisibility[col.id])
-            .map((column) => (
-              <TableCell
-                key={column.id}
-                className={column.align === "center" ? "text-center" : ""}
-              >
-                {column.render ? column.render(item) : item[column.id]}
-              </TableCell>
-            ))}
-        </TableRow>
-      );
-    })
-  )}
-</TableBody>
+              {paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={columns.filter(col => columnVisibility[col.id]).length + 2} className="text-center py-4">
+                    No Data found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((item, index) => {
+                  const rowIndex = startIndex + index;
+                  return (
+                    <TableRow key={rowIndex}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedRows.has(rowIndex)}
+                          onCheckedChange={(checked) =>
+                            handleSelectRow(rowIndex, checked as boolean)
+                          }
+                          aria-label={`Select row ${rowIndex + 1}`}
+                          className="translate-y-[2px]"
+                        />
+                      </TableCell>
+                      <TableCell className="text-center">{rowIndex + 1}</TableCell>
+                      {columns
+                        .filter((col) => columnVisibility[col.id])
+                        .map((column) => (
+                          <TableCell
+                            key={column.id}
+                            className={column.align === "center" ? "text-center" : ""}
+                          >
+                            {column.render ? column.render(item) : item[column.id]}
+                          </TableCell>
+                        ))}
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
           </Table>
         </div>
       </div>

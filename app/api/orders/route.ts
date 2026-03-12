@@ -1,6 +1,7 @@
 import BagItem from "@/models/BagItem";
 import Order from "@/models/Order";
 import { connectMongoDB } from "@/lib/mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
@@ -48,5 +49,49 @@ export async function POST(request: Request) {
     return new Response(JSON.stringify({ error: error.message || "Failed to create order" }), {
       status: 500,
     });
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    await connectMongoDB();
+    
+    // Get query parameters
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const status = searchParams.get("status");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const page = parseInt(searchParams.get("page") || "1");
+    const skip = (page - 1) * limit;
+
+    // Build query
+    let query: any = {};
+    if (userId) query.userId = userId;
+    if (status) query.status = status;
+
+    // Fetch orders with pagination
+    const orders = await Order.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // Get total count for pagination
+    const totalOrders = await Order.countDocuments(query);
+
+    return NextResponse.json({
+      orders,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalOrders / limit),
+        totalOrders,
+        limit
+      }
+    });
+  } catch (error: any) {
+    console.error("Error fetching orders:", error.message);
+    return NextResponse.json(
+      { error: "Failed to fetch orders" },
+      { status: 500 }
+    );
   }
 }
