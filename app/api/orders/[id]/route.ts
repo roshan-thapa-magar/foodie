@@ -2,7 +2,9 @@
 import { NextResponse } from "next/server";
 import Order from "@/models/Order";
 import { connectMongoDB } from "@/lib/mongodb";
-
+declare global {
+  var io: import("socket.io").Server;
+}
 interface Params {
   id: string; // this is userId
 }
@@ -55,8 +57,10 @@ export async function DELETE(req: Request, context: { params: Promise<Params> })
       );
     }
 
-    await Order.findByIdAndDelete(orderId);
-
+    const deleteOrder = await Order.findByIdAndDelete(orderId);
+    if (global.io) {
+      global.io.emit("deleteOrder", deleteOrder);
+    }
     return NextResponse.json(
       { message: "Order deleted successfully" },
       { status: 200 }
@@ -95,7 +99,10 @@ export async function PATCH(req: Request, context: { params: Promise<Params> }) 
 
     // Update status to cancelled
     order.status = "cancelled";
-    await order.save();
+    const update = await order.save();
+    if (global.io) {
+      global.io.emit("updateStatus", update);
+    }
 
     return NextResponse.json(
       { message: "Order status updated to cancelled", order },
@@ -130,7 +137,10 @@ export async function PUT(req: Request, context: { params: Promise<Params> }) {
     if (paymentStatus) order.paymentStatus = paymentStatus;
     if (paymentMethod) order.paymentMethod = paymentMethod;
 
-    await order.save();
+    const update = await order.save();
+    if (global.io) {
+      global.io.emit("orderUpdate", update);
+    }
 
     return NextResponse.json(
       { message: "Order updated successfully", order },

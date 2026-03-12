@@ -3,6 +3,10 @@ import Order from "@/models/Order";
 import { connectMongoDB } from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 
+declare global {
+  var io: import("socket.io").Server;
+}
+
 export async function POST(request: Request) {
   try {
     // 1. Parse request body
@@ -37,10 +41,13 @@ export async function POST(request: Request) {
       paymentStatus: "pending",
     });
 
-    await order.save();
+    const newOrder = await order.save();
 
     // 6. Clear the user's bag
     await BagItem.deleteMany({ userId });
+    if (global.io) {
+      global.io.emit("addOrder", newOrder);
+    }
 
     // 7. Return created order
     return new Response(JSON.stringify({ success: true, order }), { status: 201 });
@@ -55,27 +62,30 @@ export async function POST(request: Request) {
 export async function GET(request: NextRequest) {
   try {
     await connectMongoDB();
-    
-    // Get query parameters
+
     const { searchParams } = new URL(request.url);
+
     const userId = searchParams.get("userId");
     const status = searchParams.get("status");
     const limit = parseInt(searchParams.get("limit") || "50");
     const page = parseInt(searchParams.get("page") || "1");
     const skip = (page - 1) * limit;
 
-    // Build query
     let query: any = {};
-    if (userId) query.userId = userId;
-    if (status) query.status = status;
 
-    // Fetch orders with pagination
+    if (userId) query.userId = userId;
+
+    // ✅ Multiple status support
+    if (status) {
+      const statuses = status.split(",");
+      query.status = { $in: statuses };
+    }
+
     const orders = await Order.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    // Get total count for pagination
     const totalOrders = await Order.countDocuments(query);
 
     return NextResponse.json({
@@ -84,8 +94,8 @@ export async function GET(request: NextRequest) {
         currentPage: page,
         totalPages: Math.ceil(totalOrders / limit),
         totalOrders,
-        limit
-      }
+        limit,
+      },
     });
   } catch (error: any) {
     console.error("Error fetching orders:", error.message);

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { io, Socket } from "socket.io-client";
 
 interface BagItem {
   _id: string;
@@ -91,6 +92,39 @@ export function BagProvider({ children }: { children: ReactNode }) {
       setOrders([]);
     }
   }, [userId]);
+
+  useEffect(() => {
+  const socket: Socket = io({
+    path: "/socket.io/",
+    transports: ["websocket", "polling"],
+  });
+
+  socket.on("connect", () => {
+    console.log("Customer socket connected:", socket.id);
+  });
+
+  // When new order created
+  socket.on("addOrder", () => {
+    fetchOrders();
+  });
+
+  // When order updated (kitchen/admin)
+  socket.on("orderUpdate", () => {
+    fetchOrders();
+  });
+
+  // When order cancelled
+  socket.on("updateStatus", () => {
+    fetchOrders();
+  });
+  socket.on("deleteOrder", () => {
+    fetchOrders();
+  });
+
+  return () => {
+    socket.disconnect();
+  };
+}, [fetchOrders]);
 
   // ---------------- Cancel Order ----------------
   const cancelOrder = async (orderId: string) => {

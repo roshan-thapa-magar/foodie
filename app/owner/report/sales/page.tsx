@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import DataTable, { type ColumnDefinition } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,14 +15,19 @@ import {
 import { Edit, MoreHorizontal, Trash, Eye } from "lucide-react";
 import { DeleteDialog } from "@/components/delete-dialog";
 import { EditOrderDialog } from "@/components/order/EditOrderDialog";
-import { toast } from "sonner";
-/* ================= TYPES ================= */
 import { ViewItemsDialog } from "@/components/order/ViewItemsDialog";
 import { UserDetailsDialog } from "@/components/order/UserDetailsDialog";
+import { toast } from "sonner";
+import { io, Socket } from "socket.io-client";
+
+/* ================= TYPES ================= */
 interface OrderItem {
+  itemName: string;
   name: string;
   qty: number;
   price: number;
+  totalAmount: number; 
+
 }
 
 export type OrderStatus = "pending" | "preparing" | "served" | "completed" | "cancelled";
@@ -43,7 +49,6 @@ interface Order {
 }
 
 /* ================= COMPONENT ================= */
-
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -51,7 +56,7 @@ export default function OrdersPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [viewItemsOpen, setViewItemsOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{
     name: string;
@@ -60,7 +65,7 @@ export default function OrdersPage() {
     address?: string;
     image?: string;
   } | null>(null);
-  console.log(orders)
+
   /* ================= FETCH ORDERS ================= */
   useEffect(() => {
     fetchOrders();
@@ -69,13 +74,13 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/orders?status=completed&status=cancelled");
+      const res = await fetch("/api/orders?status=pending,preparing,served");
       const data = await res.json();
 
       // Map MongoDB _id to front-end id
       const mappedOrders = (data.orders || []).map((o: any) => ({
         ...o,
-        id: o._id, // important for front-end operations
+        id: o._id,
       }));
 
       setOrders(mappedOrders);
@@ -87,6 +92,38 @@ export default function OrdersPage() {
     }
   };
 
+  /* ================= SOCKET ================= */
+
+  useEffect(() => {
+    fetchOrders();
+
+    const socket: Socket = io({
+      path: "/socket.io/",
+      transports: ["websocket", "polling"],
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected:", socket.id);
+    });
+
+    socket.on("addOrder", () => {
+      fetchOrders();
+    });
+
+    socket.on("orderUpdate", () => {
+      fetchOrders();
+    });
+
+    socket.on("updateStatus", () => {
+      fetchOrders();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  /* ================= USER DETAILS ================= */
   const handleUserDetailsClick = async (userId: string) => {
     setLoading(true);
     try {
@@ -94,7 +131,7 @@ export default function OrdersPage() {
       if (!res.ok) throw new Error("Failed to fetch user details");
 
       const data = await res.json();
-      setSelectedUser(data); // data.user must match UserDetailsDialog shape
+      setSelectedUser(data.user);
       setUserDialogOpen(true);
     } catch (err: any) {
       console.error(err);
@@ -132,18 +169,56 @@ export default function OrdersPage() {
               setViewItemsOpen(true);
             }}
           >
-            <Eye className="w-4 h-4" /> View Items
+            <Eye className="w-4 h-4 mr-1" /> View Items
           </Button>
         ),
       },
       {
         id: "totalAmount",
         name: "Total Amount",
-        render: (order) => `${order.totalAmount.toFixed(2)}`,
+        render: (order) => `Rs. ${order.totalAmount.toFixed(2)}`,
       },
-      { id: "status", name: "Status" },
-      { id: "paymentStatus", name: "Payment Status" },
-      { id: "paymentMethod", name: "Payment Method" },
+      {
+        id: "status",
+        name: "Status",
+        render: (order) => {
+          const colors: Record<OrderStatus, string> = {
+            pending: "bg-yellow-100 text-yellow-800",
+            preparing: "bg-blue-100 text-blue-800",
+            served: "bg-purple-100 text-purple-800",
+            completed: "bg-green-100 text-green-800",
+            cancelled: "bg-red-100 text-red-800",
+          };
+          const color = colors[order.status];
+          return (
+            <Badge variant="outline" className={`capitalize ${color}`}>
+              {order.status}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "paymentStatus",
+        name: "Payment Status",
+        render: (order) => {
+          const colors: Record<PaymentStatus, string> = {
+            pending: "bg-yellow-100 text-yellow-800",
+            paid: "bg-green-100 text-green-800",
+            failed: "bg-red-100 text-red-800",
+          };
+          const color = colors[order.paymentStatus];
+          return (
+            <Badge variant="outline" className={`capitalize ${color}`}>
+              {order.paymentStatus}
+            </Badge>
+          );
+        },
+      },
+      {
+        id: "paymentMethod",
+        name: "Payment Method",
+        render: (order) => <span className="capitalize">{order.paymentMethod}</span>,
+      },
       { id: "note", name: "Note" },
       { id: "phone", name: "Phone" },
       { id: "address", name: "Address" },
@@ -169,7 +244,7 @@ export default function OrdersPage() {
                   setIsEditOpen(true);
                 }}
               >
-                <Edit className="h-4 w-4" /> Edit
+                <Edit className="h-4 w-4 mr-1" /> Edit
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -179,7 +254,7 @@ export default function OrdersPage() {
                   setIsDeleteOpen(true);
                 }}
               >
-                <Trash className="h-4 w-4" /> Delete
+                <Trash className="h-4 w-4 mr-1" /> Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -228,7 +303,7 @@ export default function OrdersPage() {
         prev.map((o) => (o.id === selectedOrder.id ? { ...o, ...data.order } : o))
       );
       toast.success("Order updated successfully");
-      fetchOrders()
+      fetchOrders();
       setIsEditOpen(false);
       setSelectedOrder(null);
     } catch (err: any) {
@@ -267,8 +342,6 @@ export default function OrdersPage() {
     }
   };
 
-
-
   /* ================= RENDER ================= */
   return (
     <>
@@ -291,6 +364,7 @@ export default function OrdersPage() {
           onCancel={() => setIsEditOpen(false)}
         />
       )}
+
       <ViewItemsDialog
         isOpen={viewItemsOpen}
         items={selectedItems}

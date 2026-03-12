@@ -12,6 +12,7 @@ import ShoppingBagIcon from "./Bag"
 import MobileMenu from "./MobileMenu"
 import { useAuthModal } from "@/context/auth-modal-context"
 import { useUser } from "@/context/UserContext"
+import { MapButton } from "./MapButton"; // adjust path
 
 const Header = () => {
   const router = useRouter()
@@ -60,6 +61,8 @@ const Header = () => {
 
           {/* Theme toggle */}
           <ThemeToggle />
+            <MapButton />
+
 
           {/* Offers Icon */}
           <div className="hidden md:flex items-center gap-6">

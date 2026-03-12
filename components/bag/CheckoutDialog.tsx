@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Textarea } from "../ui/textarea";
+import { useUser } from "@/context/UserContext"
 
 // Dynamic import for Map
 const AddressMap = dynamic(
@@ -41,13 +42,14 @@ const AddressMap = dynamic(
 interface CheckoutProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (phone: string, paymentMethod: string, address: string,note:string) => void;
+  onSubmit: (phone: string, paymentMethod: string, address: string, note: string) => void;
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => {
-  const [phone, setPhone] = useState("");
+  const { user } = useUser()
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [address, setAddress] = useState(user?.address || "");
   const [note, setNote] = useState(""); // <- note state
   const [isMobile, setIsMobile] = useState(false);
 
@@ -68,7 +70,7 @@ const Checkout: React.FC<CheckoutProps> = ({ open, onOpenChange, onSubmit }) => 
       toast.error("Please enter your address");
       return;
     }
-    onSubmit(phone, paymentMethod, address,note);
+    onSubmit(phone, paymentMethod, address, note);
     onOpenChange(false);
     setPhone("");
     setPaymentMethod("cash");
