@@ -15,6 +15,7 @@ export default function AccountDetails() {
 
   // Local state for form
   const [fullName, setFullName] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
   const [profileImage, setProfileImage] = useState<string | undefined>();
   const [hovering, setHovering] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,12 +30,13 @@ export default function AccountDetails() {
     if (user) {
       setFullName(user.name || "");
       setProfileImage(user.image);
+      setContactNumber(user.phone || "");
     }
   }, [user]);
 
   const handleUpdate = async () => {
     if (!userId) return;
-    const result = await updateUser(userId, { name: fullName, image: profileImage });
+    const result = await updateUser(userId, { name: fullName, phone: contactNumber,  image: profileImage });
     if (result.success) {
       toast.success(result.message);
     } else {
@@ -107,6 +109,20 @@ export default function AccountDetails() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Enter your full name"
+            />
+          </div>
+
+          {/* Contact Number Input */}
+          <div>
+            <label htmlFor="cantactNumber" className="block text-sm font-medium text-gray-700">
+              Contact Number
+            </label>
+            <Input
+              id="contactNumber"
+              className="mt-1"
+              value={contactNumber}
+              onChange={(e) => setContactNumber(e.target.value)}
+              placeholder="Enter your contact number"
             />
           </div>
 

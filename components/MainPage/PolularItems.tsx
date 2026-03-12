@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { getItems } from "@/services/items.api";
 import { ComboSkeleton } from "@/components/skeleton/ComboSkeleton";
 
-export default function BestSellingItems() {
+export default function PopularItems() {
   const router = useRouter();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function BestSellingItems() {
     try {
       const data = await getItems({
         itemType: "single",
-        sort: "top_selling",
+        sort: "popular",
       });
       setItems(data);
     } catch (error) {
@@ -30,8 +30,8 @@ export default function BestSellingItems() {
 
   return (
     <div>
-      <div className='flex justify-between items-center py-4'>
-        <span className="text-2xl font-extrabold">Best Selling Items</span>
+      <div className='flex justify-between items-center pb-4'>
+        <span className="text-2xl font-extrabold">Popular Items</span>
         <p className="font-extrabold text-blue-600 cursor-pointer" onClick={() => router.push("/bestSellingItems")}>
           See all
         </p>

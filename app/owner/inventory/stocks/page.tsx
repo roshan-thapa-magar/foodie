@@ -124,7 +124,7 @@ export default function ItemsPage() {
       { id: "itemName", name: "Item Name" },
       { id: "itemType", name: "Type" },
       { id: "category", name: "Category" },
-      { id: "price", name: "Price", render: (item) => `$${item.price}` },
+      { id: "price", name: "Price", render: (item) => `${item.price}` },
       { id: "description", name: "Description" },
       {
         id: "toppings",

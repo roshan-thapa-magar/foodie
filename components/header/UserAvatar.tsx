@@ -34,7 +34,6 @@ const UserAvatar = () => {
 
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem onClick={() => router.push("/myAccount")}>View Profile</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => router.push("/orderHistory")}>order History</DropdownMenuItem>
         <DropdownMenuItem className="text-red-500" onClick={() => signOut()}>
           Logout
         </DropdownMenuItem>

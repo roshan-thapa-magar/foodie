@@ -63,15 +63,15 @@ const NoteInput = memo(({ note, setNote }: { note: string; setNote: (value: stri
 NoteInput.displayName = "NoteInput";
 
 // Memoized SpicyLevel component
-const SpicyLevel = memo(({ 
-  title, 
-  items, 
-  value, 
-  onChange 
-}: { 
-  title: string; 
-  items: ToppingItem[]; 
-  value: number; 
+const SpicyLevel = memo(({
+  title,
+  items,
+  value,
+  onChange
+}: {
+  title: string;
+  items: ToppingItem[];
+  value: number;
   onChange: (index: number) => void;
 }) => {
   const currentItem = items[value]?.title || "None";
@@ -168,67 +168,67 @@ export function FoodOrderingDialog({ item, children, open, onOpenChange }: FoodO
   };
 
   // Add to cart
-const handleAddToCart = async () => {
-  if (!user) {
-    toast.error("Please log in");
-    return;
-  }
-  
-  setLoading(true);
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.error("Please log in");
+      return;
+    }
 
-  const toppingsPayload =
-    item.toppings?.map((topping) => {
-      if (topping.selectionType === "multiple") {
-        const selectedItems = Array.from(multipleToppings[topping.toppingTitle] || []).map((title) => {
-          const itemObj = topping.items?.find((i) => i.title === title);
-          return { title: itemObj?.title || title, price: itemObj?.price || 0 };
-        });
-        
-        // Only return if there are selected items OR if the topping group is required
-        if (selectedItems.length > 0 || topping.required) {
-          return { 
-            toppingTitle: topping.toppingTitle, 
-            selectionType: "multiple", 
-            items: selectedItems 
-          };
-        }
-        return null; // Skip this topping group if no items selected and not required
-      } else {
-        const index = singleToppings[topping.toppingTitle] || 0;
-        const selectedItem = topping.items?.[index];
-        
-        // For single selection, check if an item is actually selected (index > 0) OR if required
-        if (index > 0 || topping.required) {
-          return {
-            toppingTitle: topping.toppingTitle,
-            selectionType: "single",
-            selectedItem: selectedItem?.title || "",
-            items: topping.items,
-          };
-        }
-        return null; // Skip if no item selected and not required
-      }
-    }).filter(Boolean) || []; // Remove all null entries
+    setLoading(true);
 
-  const payload = {
-    userId: user._id,
-    itemId: item._id,
-    itemName: item.itemName,
-    price: item.price,
-    qty: quantity,
-    image: item.image,
-    note,
-    toppings: toppingsPayload,
-    createdAt: new Date().toISOString(),
+    const toppingsPayload =
+      item.toppings?.map((topping) => {
+        if (topping.selectionType === "multiple") {
+          const selectedItems = Array.from(multipleToppings[topping.toppingTitle] || []).map((title) => {
+            const itemObj = topping.items?.find((i) => i.title === title);
+            return { title: itemObj?.title || title, price: itemObj?.price || 0 };
+          });
+
+          // Only return if there are selected items OR if the topping group is required
+          if (selectedItems.length > 0 || topping.required) {
+            return {
+              toppingTitle: topping.toppingTitle,
+              selectionType: "multiple",
+              items: selectedItems
+            };
+          }
+          return null; // Skip this topping group if no items selected and not required
+        } else {
+          const index = singleToppings[topping.toppingTitle] || 0;
+          const selectedItem = topping.items?.[index];
+
+          // For single selection, check if an item is actually selected (index > 0) OR if required
+          if (index > 0 || topping.required) {
+            return {
+              toppingTitle: topping.toppingTitle,
+              selectionType: "single",
+              selectedItem: selectedItem?.title || "",
+              items: topping.items,
+            };
+          }
+          return null; // Skip if no item selected and not required
+        }
+      }).filter(Boolean) || []; // Remove all null entries
+
+    const payload = {
+      userId: user._id,
+      itemId: item._id,
+      itemName: item.itemName,
+      price: item.price,
+      qty: quantity,
+      image: item.image,
+      note,
+      toppings: toppingsPayload,
+      createdAt: new Date().toISOString(),
+    };
+
+    const success = await addToBag(payload);
+    if (success) {
+      setIsOpen(false);
+      resetForm();
+    }
+    setLoading(false);
   };
-
-  const success = await addToBag(payload);
-  if (success) {
-    setIsOpen(false);
-    resetForm();
-  }
-  setLoading(false);
-};
 
   // Media query hook
   const useMediaQuery = (query: string) => {
@@ -250,27 +250,30 @@ const handleAddToCart = async () => {
     return (
       <div className="flex flex-col h-full">
         <div className="p-4 md:p-0 space-y-2 md:mb-4 hide-scrollbar overflow-y-auto max-h-[calc(100vh-200px)]">
-          <Image
-            src={item.image}
-            alt={item.itemName}
-            height={100}
-            width={100}
-            className="w-full h-[30vh] object-cover rounded-lg"
-          />
+          <div className="relative w-full h-[30vh] rounded-lg overflow-hidden">
+            <Image
+              src={item.image}
+              alt={item.itemName}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+            />
+          </div>
           <p className="font-medium">{item.description}</p>
           <div className="flex justify-between items-center">
             <p className="text-xl font-extrabold">Rs. {item.price}</p>
-            <span 
-              className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors" 
+            <span
+              className="cursor-pointer p-2 hover:bg-gray-100 rounded-full transition-colors"
               onClick={() => setOpenNote((prev) => !prev)}
             >
               <Plus className="w-5 h-5" />
             </span>
           </div>
-          
+
           {/* Use memoized NoteInput component */}
           {openNote && <NoteInput note={note} setNote={setNote} />}
-          
+
           <div className="space-y-4">
             {item.toppings?.map((topping) =>
               topping.selectionType === "multiple" ? (
@@ -341,12 +344,12 @@ const handleAddToCart = async () => {
       </div>
     );
   }, [
-    item, 
-    quantity, 
-    multipleToppings, 
-    singleToppings, 
-    openNote, 
-    note, 
+    item,
+    quantity,
+    multipleToppings,
+    singleToppings,
+    openNote,
+    note,
     loading,
     handleCheckboxChange,
     handleSliderChange,
@@ -360,8 +363,8 @@ const handleAddToCart = async () => {
         <DrawerTrigger asChild onClick={handleTriggerClick}>
           {children}
         </DrawerTrigger>
-        <DrawerContent 
-          className="h-auto z-[1100]" 
+        <DrawerContent
+          className="h-auto z-[1100]"
           onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
         >
           <DrawerHeader>
@@ -387,8 +390,8 @@ const handleAddToCart = async () => {
       <DialogTrigger asChild onClick={handleTriggerClick}>
         {children}
       </DialogTrigger>
-      <DialogContent 
-        className="sm:max-w-md" 
+      <DialogContent
+        className="sm:max-w-md"
         onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
       >
         <DialogHeader>

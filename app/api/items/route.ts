@@ -3,7 +3,7 @@ import { connectMongoDB } from "@/lib/mongodb";
 import Items from "@/models/items";
 import cloudinary from "@/lib/cloudinary";
 import Category from "@/models/categories";
-
+import Order from "@/models/Order";
 export async function POST(request: NextRequest) {
   try {
     await connectMongoDB();
@@ -95,41 +95,84 @@ export async function GET(request: NextRequest) {
 
     let query: any = {};
 
-    // Type filter
+    // ---------------- Type filter ----------------
     if (type) query.itemType = type;
 
-    // Price range filter
+    // ---------------- Price range filter ----------------
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    // Category filter (multiple cids)
+    // ---------------- Category filter ----------------
     if (cidParam) {
-      const cids = cidParam.split(","); // array of category IDs
-      console.log(cids)
-
-      // Find category names from Category model
+      const cids = cidParam.split(",");
       const categories = await Category.find({ _id: { $in: cids } }).select("categoryName");
-      const categoryNames = categories.map((cat) => cat.categoryName); // use categoryName field
-      console.log(categoryNames)
-      // Filter items whose category is in the list
+      const categoryNames = categories.map((cat) => cat.categoryName);
       query.category = { $in: categoryNames };
     }
 
-    // Sort option
-    let sortOption: any = {};
-    if (sort === "price_low") sortOption = { price: 1 };
-    else if (sort === "price_high") sortOption = { price: -1 };
-    else if (sort === "popular") sortOption = { ordersCount: -1 }; // make sure schema has ordersCount
+    // ---------------- Sorting ----------------
+    if (sort === "popular") {
+      // Popular items: based on unique users
+      const popularityAggregation = await Order.aggregate([
+        { $unwind: "$items" },
+        { $group: { _id: { itemId: "$items.itemId", userId: "$userId" } } },
+        { $group: { _id: "$_id.itemId", userCount: { $sum: 1 } } },
+        { $sort: { userCount: -1 } },
+      ]);
 
-    const items = await Items.find(query).sort(sortOption);
+      const popularityMap: Record<string, number> = {};
+      popularityAggregation.forEach((pop) => {
+        if (pop._id) popularityMap[pop._id.toString()] = pop.userCount;
+      });
 
-    return NextResponse.json(
-      { message: "Items fetched successfully", items },
-      { status: 200 }
-    );
+      const items = await Items.find(query);
+      const itemsWithPopularity = items.map((item) => ({
+        ...item.toObject(),
+        userCount: popularityMap[item._id.toString()] || 0,
+      }));
+      itemsWithPopularity.sort((a, b) => b.userCount - a.userCount);
+
+      return NextResponse.json(
+        { message: "Items fetched successfully", items: itemsWithPopularity },
+        { status: 200 }
+      );
+    } else if (sort === "top_selling") {
+      // Top-selling items: based on total qty sold
+      const topSellingAggregation = await Order.aggregate([
+        { $unwind: "$items" },
+        { $group: { _id: "$items.itemId", totalSold: { $sum: "$items.qty" } } },
+        { $sort: { totalSold: -1 } },
+      ]);
+
+      const topSellingMap: Record<string, number> = {};
+      topSellingAggregation.forEach((pop) => {
+        if (pop._id) topSellingMap[pop._id.toString()] = pop.totalSold;
+      });
+
+      const items = await Items.find(query);
+      const itemsWithSales = items.map((item) => ({
+        ...item.toObject(),
+        totalSold: topSellingMap[item._id.toString()] || 0,
+      }));
+      itemsWithSales.sort((a, b) => b.totalSold - a.totalSold);
+
+      return NextResponse.json(
+        { message: "Items fetched successfully", items: itemsWithSales },
+        { status: 200 }
+      );
+    } else {
+      // Default sorting: price_low / price_high
+      let sortOption: any = {};
+      if (sort === "price_low") sortOption = { price: 1 };
+      else if (sort === "price_high") sortOption = { price: -1 };
+
+      const items = await Items.find(query).sort(sortOption);
+      return NextResponse.json({ message: "Items fetched successfully", items }, { status: 200 });
+    }
+
   } catch (error) {
     console.error(error);
     return NextResponse.json(

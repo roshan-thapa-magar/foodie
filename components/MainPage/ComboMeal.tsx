@@ -13,7 +13,7 @@ export default function ComboMeal() {
 
   const fetchComboItems = async () => {
     try {
-      const data = await getItems({ itemType: "combo" });
+      const data = await getItems({ itemType: "combo" , sort: "top_selling"});
       setItems(data);
     } catch (error) {
       console.error("Failed to fetch combo items", error);
