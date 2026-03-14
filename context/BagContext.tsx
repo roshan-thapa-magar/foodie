@@ -46,6 +46,11 @@ interface BagContextType {
   removeToppingItem: (bagId: string, toppingItemId: string) => Promise<void>;
   removeToppingGroup: (bagId: string, toppingGroupId: string) => Promise<void>;
   updateItemNote: (bagId: string, note: string) => Promise<void>;
+  updateSelectedTopping: (
+    bagId: string,
+    toppingTitle: string,
+    selectedItem: string
+  ) => Promise<void>;
 }
 
 const BagContext = createContext<BagContextType | undefined>(undefined);
@@ -94,37 +99,37 @@ export function BagProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   useEffect(() => {
-  const socket: Socket = io({
-    path: "/socket.io/",
-    transports: ["websocket", "polling"],
-  });
+    const socket: Socket = io({
+      path: "/socket.io/",
+      transports: ["websocket", "polling"],
+    });
 
-  socket.on("connect", () => {
-    console.log("Customer socket connected:", socket.id);
-  });
+    socket.on("connect", () => {
+      console.log("Customer socket connected:", socket.id);
+    });
 
-  // When new order created
-  socket.on("addOrder", () => {
-    fetchOrders();
-  });
+    // When new order created
+    socket.on("addOrder", () => {
+      fetchOrders();
+    });
 
-  // When order updated (kitchen/admin)
-  socket.on("orderUpdate", () => {
-    fetchOrders();
-  });
+    // When order updated (kitchen/admin)
+    socket.on("orderUpdate", () => {
+      fetchOrders();
+    });
 
-  // When order cancelled
-  socket.on("updateStatus", () => {
-    fetchOrders();
-  });
-  socket.on("deleteOrder", () => {
-    fetchOrders();
-  });
+    // When order cancelled
+    socket.on("updateStatus", () => {
+      fetchOrders();
+    });
+    socket.on("deleteOrder", () => {
+      fetchOrders();
+    });
 
-  return () => {
-    socket.disconnect();
-  };
-}, [fetchOrders]);
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchOrders]);
 
   // ---------------- Cancel Order ----------------
   const cancelOrder = async (orderId: string) => {
@@ -150,7 +155,7 @@ export function BagProvider({ children }: { children: ReactNode }) {
   };
 
   // ---------------- Add to Order ----------------
-  const addToOrder = async (address: string, phone: string, paymentMethod: string,note: string) => {
+  const addToOrder = async (address: string, phone: string, paymentMethod: string, note: string) => {
     if (!userId) {
       toast.error("Please log in");
       return false;
@@ -159,7 +164,7 @@ export function BagProvider({ children }: { children: ReactNode }) {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, address, phone, paymentMethod,note }),
+        body: JSON.stringify({ userId, address, phone, paymentMethod, note }),
       });
       if (!res.ok) throw new Error();
       toast.success("Order placed successfully!");
@@ -238,6 +243,31 @@ export function BagProvider({ children }: { children: ReactNode }) {
     await fetch(`/api/bag/${bagId}/note`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ note }) });
   };
 
+  const updateSelectedTopping = async (
+    bagId: string,
+    toppingTitle: string,
+    selectedItem: string
+  ) => {
+    try {
+      const res = await fetch(`/api/bag/${bagId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toppingTitle, selectedItem }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to update topping");
+
+      toast.success("Topping updated successfully!");
+      await fetchBag(); // refresh bag items
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to update topping");
+    }
+  };
+
+
+
   useEffect(() => {
     fetchBag();
     fetchOrders();
@@ -260,6 +290,7 @@ export function BagProvider({ children }: { children: ReactNode }) {
       removeToppingItem,
       removeToppingGroup,
       updateItemNote,
+      updateSelectedTopping,
     }}>
       {children}
     </BagContext.Provider>

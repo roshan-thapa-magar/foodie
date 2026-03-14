@@ -163,7 +163,6 @@ export async function PATCH(
     await connectMongoDB();
 
     const bagItem = await BagItem.findById(bagId);
-
     if (!bagItem) {
       return NextResponse.json(
         { success: false, message: "BagItem not found" },
@@ -172,16 +171,50 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { note } = body;
+    const { note, toppingTitle, selectedItem } = body;
 
-    bagItem.note = note || "";
+    // ---------- Update note ----------
+    if (typeof note === "string") {
+      bagItem.note = note;
+    }
+
+    // ---------- Update selectedItem for single-selection toppings ----------
+    if (toppingTitle && selectedItem) {
+      type ToppingType = typeof bagItem.toppings[number];
+      type ToppingItemType = typeof bagItem.toppings[number]["items"][number];
+
+      const topping = bagItem.toppings.find(
+        (t: ToppingType) => t.toppingTitle === toppingTitle
+      );
+
+      if (!topping) {
+        return NextResponse.json(
+          { success: false, message: "Topping not found" },
+          { status: 404 }
+        );
+      }
+
+      if (topping.selectionType === "single") {
+        topping.selectedItem = selectedItem;
+
+        const selected = topping.items.find(
+          (i: ToppingItemType) => i.title === selectedItem
+        );
+        topping.totalSelectedToppingPrice = selected ? selected.price : 0;
+      } else {
+        return NextResponse.json(
+          { success: false, message: "Multiple-selection toppings not supported here" },
+          { status: 400 }
+        );
+      }
+    }
 
     await bagItem.save();
 
     return NextResponse.json(
       {
         success: true,
-        message: "Note updated successfully",
+        message: "BagItem updated successfully",
         data: bagItem,
       },
       { status: 200 }
@@ -189,13 +222,12 @@ export async function PATCH(
 
   } catch (error: unknown) {
     console.error(error);
-
     const errMsg = error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update note",
+        message: "Failed to update BagItem",
         error: errMsg,
       },
       { status: 500 }

@@ -38,6 +38,7 @@ const Bag = () => {
     removeToppingGroup,
     updateItemNote,
     addToOrder,
+    updateSelectedTopping,
   } = useBag();
 
 
@@ -295,7 +296,14 @@ const Bag = () => {
                                     <SpicyLevel
                                       title={topping.toppingTitle}
                                       items={topping.items || []}
-                                      selectedItem={topping.selectedItem}
+                                      selectedItem={topping.selectedItem} // initial selection
+                                      onChange={async (index) => {
+                                        const selected = topping.items[index]?.title;
+                                        if (!selected) return;
+
+                                        // Call context to update the bag item
+                                        await updateSelectedTopping(item._id, topping.toppingTitle, selected);
+                                      }}
                                     />
                                   </div>
                                 )}
@@ -329,8 +337,8 @@ const Bag = () => {
               <CheckoutDialog
                 open={checkoutOpen}
                 onOpenChange={setCheckoutOpen}
-                onSubmit={(phone, paymentMethod, address,note) => {
-                  addToOrder(address, phone, paymentMethod,note);
+                onSubmit={(phone, paymentMethod, address, note) => {
+                  addToOrder(address, phone, paymentMethod, note);
                 }}
               />
               <Button
