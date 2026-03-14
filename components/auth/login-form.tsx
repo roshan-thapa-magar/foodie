@@ -23,7 +23,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
-import { X } from "lucide-react"
+import { Loader2, X } from "lucide-react"
 import { useAuthModal } from "@/context/auth-modal-context"
 import { signIn } from "next-auth/react"
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
@@ -33,7 +33,16 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   const [email, setEmail] = useState("")
   const [otp, setOtp] = useState("")
   const { closeModal } = useAuthModal()
-
+  const [loadingGoogle, setLoadingGoogle] = useState(false)
+  const handleGoogleLogin = async () => {
+    setLoadingGoogle(true)
+    try {
+      await signIn('google', { callbackUrl: "/" })
+    } catch (err) {
+      console.error("Google login error:", err)
+      setLoadingGoogle(false)
+    }
+  }
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     console.log("Login phone:", phone)
@@ -92,9 +101,17 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                   <Button
                     variant="outline"
                     type="button"
-                    onClick={() => signIn('google')}
+                    onClick={handleGoogleLogin}
+                    disabled={loadingGoogle}
                   >
-                    Login with Google
+                    {loadingGoogle ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="animate-spin h-4 w-4" />
+                        Logging in...
+                      </div>
+                    ) : (
+                      "Login with Google"
+                    )}
                   </Button>
                 </Field>
               </FieldGroup>
