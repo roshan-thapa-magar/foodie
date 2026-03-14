@@ -65,3 +65,21 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+export async function GET() {
+  try {
+    await connectMongoDB();
+
+    const users = await User.find({}).select("-password");
+
+    return NextResponse.json(users, { status: 200 });
+  } catch (error) {
+    console.error("Fetch users error:", error);
+
+    return NextResponse.json(
+      { message: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
+}

@@ -39,6 +39,8 @@ interface UserContextType {
     data: { name?: string; image?: string; phone?: string; address?: string }
   ) => Promise<UpdateUserResponse>;
   deleteUser: (id: string) => Promise<DeleteUserResponse>;
+  fetchUserByRole: (role: string) => Promise<FetchUserResponse & { user?: User }>;
+
 
 }
 
@@ -119,8 +121,36 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Fetch user by role
+  const fetchUserByRole = useCallback(
+    async (role: string): Promise<FetchUserResponse & { user?: User }> => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/users?role=${role}`);
+        const data = await res.json();
+
+        if (res.ok && data.length > 0) {
+          const owner = data[0]; // take first user with that role
+          setUser(owner);        // optional: store in context
+          return { success: true, user: owner };
+        } else {
+          return { success: false, message: "No user found with this role" };
+        }
+      } catch (error) {
+        return {
+          success: false,
+          message: error instanceof Error ? error.message : String(error),
+        };
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+
   return (
-    <UserContext.Provider value={{ user, loading, fetchUser, updateUser, deleteUser }}>
+    <UserContext.Provider value={{ user, loading, fetchUser, updateUser, deleteUser,fetchUserByRole }}>
       {children}
     </UserContext.Provider>
   );
