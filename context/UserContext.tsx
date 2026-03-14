@@ -25,6 +25,11 @@ interface UpdateUserResponse {
   user?: User;
 }
 
+interface DeleteUserResponse {
+  success: boolean;
+  message?: string;
+}
+
 interface UserContextType {
   user: User | null;
   loading: boolean;
@@ -33,6 +38,8 @@ interface UserContextType {
     id: string,
     data: { name?: string; image?: string; phone?: string; address?: string }
   ) => Promise<UpdateUserResponse>;
+  deleteUser: (id: string) => Promise<DeleteUserResponse>;
+
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -90,8 +97,30 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  // ✅ New deleteUser method
+  const deleteUser = useCallback(async (id: string): Promise<DeleteUserResponse> => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/users/${id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser(null); // clear the user from context
+        return { success: true, message: data.message || "User deleted successfully" };
+      } else {
+        return { success: false, message: data.message || "Failed to delete user" };
+      }
+    } catch (error) {
+      return { success: false, message: error instanceof Error ? error.message : String(error) };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return (
-    <UserContext.Provider value={{ user, loading, fetchUser, updateUser }}>
+    <UserContext.Provider value={{ user, loading, fetchUser, updateUser, deleteUser }}>
       {children}
     </UserContext.Provider>
   );

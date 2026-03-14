@@ -74,7 +74,7 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/orders?status=pending,preparing,served");
+      const res = await fetch("/api/orders?status=completed,cancelled");
       const data = await res.json();
 
       // Map MongoDB _id to front-end id

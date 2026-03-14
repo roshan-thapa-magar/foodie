@@ -5,13 +5,15 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Loader2, Pencil } from 'lucide-react';
 import { useUser } from "@/context/UserContext";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { toast } from "sonner";
-
+import { DeleteDialog } from "@/components/delete-dialog";
+import { useRouter } from "next/navigation";
 export default function AccountDetails() {
   const { data: session } = useSession();
-  const { user, fetchUser, updateUser, loading } = useUser();
+  const { user, fetchUser, updateUser, loading, deleteUser } = useUser();
   const userId = session?.user?._id;
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   // Local state for form
   const [fullName, setFullName] = useState("");
@@ -19,7 +21,7 @@ export default function AccountDetails() {
   const [profileImage, setProfileImage] = useState<string | undefined>();
   const [hovering, setHovering] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const router = useRouter();
   // Fetch user when session ID is available
   useEffect(() => {
     if (userId) fetchUser(userId);
@@ -36,12 +38,26 @@ export default function AccountDetails() {
 
   const handleUpdate = async () => {
     if (!userId) return;
-    const result = await updateUser(userId, { name: fullName, phone: contactNumber,  image: profileImage });
+    const result = await updateUser(userId, { name: fullName, phone: contactNumber, image: profileImage });
     if (result.success) {
       toast.success(result.message);
     } else {
       toast.error(result.message);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!userId) return;
+    const result = await deleteUser(userId);
+
+    if (result.success) {
+      await signOut({ redirect: false }); // prevent default redirect
+      router.push("/"); // now this will work
+      toast.success(result.message);
+    } else {
+      toast.error(result.message);
+    }
+    setIsDeleteOpen(false); // Close dialog
   };
 
   // Handle profile image change
@@ -114,7 +130,7 @@ export default function AccountDetails() {
 
           {/* Contact Number Input */}
           <div>
-            <label htmlFor="cantactNumber" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="contactNumber" className="block text-sm font-medium text-gray-700">
               Contact Number
             </label>
             <Input
@@ -151,10 +167,21 @@ export default function AccountDetails() {
 
         {/* Right Column */}
         <div className="flex items-start md:items-start md:justify-end">
-          <Button variant="destructive" className="w-full md:w-auto">
+          <Button variant="destructive" onClick={() => setIsDeleteOpen(true)}
+            className="w-full md:w-auto">
             Remove My Account
           </Button>
         </div>
+
+        {/* Delete Dialog */}
+        <DeleteDialog
+          isOpen={isDeleteOpen}
+          isLoading={loading}
+          title="Delete your account?"
+          description="Deleting your account will permanently remove all your account details and your selected bag items. This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteOpen(false)}
+        />
       </div>
     </>
   );

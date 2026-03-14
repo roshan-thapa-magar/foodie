@@ -84,27 +84,30 @@ export const authOptions: NextAuthOptions = {
           await connectMongoDB();
           let existingUser = await User.findOne({ email: user.email });
 
-          let imageUrl = user.image || null;
-
-          // Upload Google profile image to Cloudinary
-          if (imageUrl) {
-            const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
-              folder: "users",
-              public_id: `user_${Date.now()}`,
-            });
-            imageUrl = uploadResponse.secure_url;
-          }
-
           if (!existingUser) {
+            // Only upload image if user doesn't exist
+            let imageUrl = user.image || null;
+            if (imageUrl) {
+              const uploadResponse = await cloudinary.uploader.upload(imageUrl, {
+                folder: "users",
+                public_id: `user_${Date.now()}`,
+              });
+              imageUrl = uploadResponse.secure_url;
+            }
+
             existingUser = await User.create({
               name: user.name,
               email: user.email,
               image: imageUrl,
               role: "user",
             });
-          } else if (!existingUser.image && imageUrl) {
-            // Update user image if not set
-            existingUser.image = imageUrl;
+          } else if (!existingUser.image && user.image) {
+            // Upload only if the existing user has no image yet
+            const uploadResponse = await cloudinary.uploader.upload(user.image, {
+              folder: "users",
+              public_id: `user_${Date.now()}`,
+            });
+            existingUser.image = uploadResponse.secure_url;
             await existingUser.save();
           }
 
@@ -115,7 +118,7 @@ export const authOptions: NextAuthOptions = {
         }
       }
       return true;
-    },
+    }
   },
 };
 
