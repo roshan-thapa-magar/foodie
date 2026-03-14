@@ -61,7 +61,7 @@ const Header = () => {
 
           {/* Theme toggle */}
           <ThemeToggle />
-            <MapButton />
+          <MapButton />
 
 
           {/* Offers Icon */}
@@ -73,12 +73,15 @@ const Header = () => {
           </div>
 
           {/* Notifications and Bag */}
-          <Notifications />
+            {status === "authenticated" && session?.user?.role == "user" ? (
+              <Notifications />
+            ) : ""}
+          
           <ShoppingBagIcon />
 
           {/* User Avatar / Login */}
           <div className="hidden md:flex">
-            {status === "authenticated" ? (
+            {status === "authenticated" && session?.user?.role == "user" ? (
               <UserAvatar />
             ) : (
               <div onClick={openModal} className="cursor-pointer">
