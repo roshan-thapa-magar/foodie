@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/mongodb";
 import RestaurantBanner from "@/models/restaurantBannerSchema";
 import cloudinary from "@/lib/cloudinary";
+declare global {
+  var io: import("socket.io").Server;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +19,9 @@ export async function POST(req: NextRequest) {
       url: upload.secure_url,
       public_id: upload.public_id,
     });
+    if (global.io) {
+      global.io.emit("addBanner", banner);
+    }
 
     return NextResponse.json({
       success: true,
@@ -50,11 +56,15 @@ export async function PATCH(req: NextRequest) {
     const { banners } = await req.json(); // array of { id, order }
 
     // Update multiple banners in parallel
-    await Promise.all(
+    const updateBanner = await Promise.all(
       banners.map((b: { id: string; order: number }) =>
         RestaurantBanner.findByIdAndUpdate(b.id, { order: b.order })
       )
     );
+
+    if (global.io) {
+      global.io.emit("updateBanner", updateBanner);
+    }
 
     return NextResponse.json({ success: true, message: "Banner order updated" });
   } catch (error) {

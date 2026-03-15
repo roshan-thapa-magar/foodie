@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/mongodb";
 import RestaurantBanner from "@/models/restaurantBannerSchema";
 import cloudinary from "@/lib/cloudinary";
-
+declare global {
+  var io: import("socket.io").Server;
+}
 // Next.js 16 expects params as Promise
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -44,7 +46,10 @@ export async function PUT(req: NextRequest, context: RouteContext) {
       banner.public_id = upload.public_id;
     }
 
-    await banner.save();
+    const updateBanner = await banner.save();
+    if (global.io) {
+      global.io.emit("update", updateBanner);
+    }
     return NextResponse.json({ success: true, message: "Banner updated", data: banner });
   } catch (error) {
     return NextResponse.json({ success: false, message: error });
@@ -61,7 +66,10 @@ export async function DELETE(req: NextRequest, context: RouteContext) {
     if (!banner) return NextResponse.json({ success: false, message: "Banner not found" });
 
     await cloudinary.uploader.destroy(banner.public_id);
-    await banner.deleteOne();
+    const deleteBanner = await banner.deleteOne();
+    if (global.io) {
+      global.io.emit("delete", deleteBanner);
+    }
 
     return NextResponse.json({ success: true, message: "Banner deleted" });
   } catch (error) {

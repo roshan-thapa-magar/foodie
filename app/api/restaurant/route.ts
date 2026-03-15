@@ -2,7 +2,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectMongoDB } from "@/lib/mongodb";
 import Restaurant from "@/models/restaurantSchema";
-
+declare global {
+  var io: import("socket.io").Server;
+}
 // GET all restaurants
 export async function GET() {
   try {
@@ -39,6 +41,9 @@ export async function POST(req: NextRequest) {
       operatingDays: operatingDays || [],
       shopStatus: shopStatus || "closed",
     });
+    if (global.io) {
+      global.io.emit("addRestaurant", newRestaurant);
+    }
 
     return NextResponse.json(newRestaurant, { status: 201 });
   } catch (error: any) {
@@ -69,6 +74,9 @@ export async function PUT(req: NextRequest) {
       { $set: updateData },
       { new: true, runValidators: true }
     );
+        if (global.io) {
+      global.io.emit("updateRestaurant", updatedRestaurant);
+    }
 
     if (!updatedRestaurant) {
       return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
